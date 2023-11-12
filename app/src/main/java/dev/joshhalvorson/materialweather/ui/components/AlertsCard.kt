@@ -3,14 +3,19 @@ package dev.joshhalvorson.materialweather.ui.components
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PageSize
+import androidx.compose.foundation.pager.PagerDefaults
+import androidx.compose.foundation.pager.PagerScope
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
@@ -85,8 +90,13 @@ private fun CardContent(
     dialogVisible: Boolean,
     onActiveAlertChanged: (WeatherAlert) -> Unit
 ) {
-    val pagerState = rememberPagerState()
     val alertsToShow = if (gptAlerts.isEmpty()) alerts.allAlerts else alerts.alert + gptAlerts
+    val pagerState = rememberPagerState(
+        initialPage = 0,
+        initialPageOffsetFraction = 0f
+    ) {
+        alertsToShow.size
+    }
 
     LaunchedEffect(pagerState.currentPage, alertsToShow) {
         launch {
@@ -109,23 +119,31 @@ private fun CardContent(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        HorizontalPager(state = pagerState, pageCount = alertsToShow.size) { page ->
-            val item = alertsToShow[page]
+        // Pager content
+        HorizontalPager(
+            modifier = Modifier,
+            state = pagerState,
+            pageContent = { page ->
+                val item = alertsToShow[page]
 
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Icon(
-                    modifier = Modifier.size(16.dp),
-                    painter = painterResource(id = if (Severity.getSeverity(item.severity) == Severity.Unknown) R.drawable.baseline_error_24 else R.drawable.baseline_warning_24),
-                    contentDescription = stringResource(R.string.alerts),
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer
-                )
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        modifier = Modifier.size(16.dp),
+                        painter = painterResource(id = if (Severity.getSeverity(item.severity) == Severity.Unknown) R.drawable.baseline_error_24 else R.drawable.baseline_warning_24),
+                        contentDescription = stringResource(R.string.alerts),
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
 
-                AlertText(alert = item)
+                    AlertText(alert = item)
+                }
             }
-        }
+        )
+
+        // Page dots
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center

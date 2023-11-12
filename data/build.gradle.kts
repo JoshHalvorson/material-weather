@@ -14,7 +14,7 @@ localProperties.load(FileInputStream(localPropertiesFile))
 
 android {
     namespace = "dev.joshhalvorson.materialweather.data"
-    compileSdk = 33
+    compileSdk = 34
 
     defaultConfig {
         minSdk = 31
@@ -51,7 +51,7 @@ kapt {
 }
 
 dependencies {
-    implementation("androidx.core:core-ktx:1.10.1")
+    implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     // define a BOM and its version
@@ -63,12 +63,12 @@ dependencies {
 
     api("com.google.code.gson:gson:2.10.1")
 
-    implementation("com.google.dagger:hilt-android:2.46.1")
-    kapt("com.google.dagger:hilt-compiler:2.46.1")
+    implementation("com.google.dagger:hilt-android:2.48.1")
+    kapt("com.google.dagger:hilt-compiler:2.48.1")
     androidTestImplementation("com.google.dagger:hilt-android-testing:2.46.1")
-    kaptAndroidTest("com.google.dagger:hilt-compiler:2.46.1")
+    kaptAndroidTest("com.google.dagger:hilt-compiler:2.48.1")
     testImplementation("com.google.dagger:hilt-android-testing:2.46.1")
-    kaptTest("com.google.dagger:hilt-compiler:2.46.1")
+    kaptTest("com.google.dagger:hilt-compiler:2.48.1")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
