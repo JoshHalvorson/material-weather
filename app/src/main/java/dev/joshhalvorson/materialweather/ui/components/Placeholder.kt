@@ -17,7 +17,7 @@ fun Modifier.weatherPlaceholder(
 ): Modifier = composed {
     this.placeholder(
         visible = visible,
-        color = MaterialTheme.colorScheme.primaryContainer,
+        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = .35f),
         highlight = PlaceholderHighlight.fade(),
         shape = shape
     )

@@ -8,18 +8,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import dev.joshhalvorson.materialweather.ui.theme.card
 
+/**
+ * The root card component for any of the cards used in the app.
+ */
 @Composable
 fun WeatherCard(
     modifier: Modifier = Modifier,
     shape: CornerBasedShape = MaterialTheme.shapes.card,
-    color: Color = MaterialTheme.colorScheme.primaryContainer,
-    contentColor: Color = MaterialTheme.colorScheme.onPrimaryContainer,
+    color: Color = MaterialTheme.colorScheme.secondaryContainer,
+    contentColor: Color = MaterialTheme.colorScheme.onSecondaryContainer,
     content: @Composable () -> Unit
 ) {
     Surface(
         modifier = modifier,
         shape = shape,
-        color = color,
+        color = color.copy(alpha = .35f),
         contentColor = contentColor,
         content = content
     )
