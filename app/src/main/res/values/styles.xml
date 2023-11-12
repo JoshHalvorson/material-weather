@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="MyWidgetTheme">
+        <item name="backgroundRadius">@dimen/current_weather_widget_background_radius</item>
+    </style>
+</resources>
