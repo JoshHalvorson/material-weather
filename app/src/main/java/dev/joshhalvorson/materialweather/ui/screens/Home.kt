@@ -36,6 +36,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.android.gms.location.LocationServices
 import dev.joshhalvorson.materialweather.R
 import dev.joshhalvorson.materialweather.ui.components.AirQualityCard
@@ -56,18 +57,18 @@ import dev.joshhalvorson.materialweather.ui.viewmodel.HomeViewModel
 @Composable
 fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
     // State
-    val currentWeather by viewModel.currentWeather.collectAsState()
-    val loading by viewModel.loading.collectAsState()
-    val loadingAlerts by viewModel.loading2.collectAsState()
-    val error by viewModel.error.collectAsState()
-    val errorMessage by viewModel.errorMessage.collectAsState()
-    val refreshing by viewModel.refreshing.collectAsState()
-    val retrievedWeather by viewModel.retrievedWeather.collectAsState()
-    val showAlertInfoDialog by viewModel.showAlertInfoDialog.collectAsState()
-    val clickedAlert by viewModel.clickedAlert.collectAsState()
-    val showAirQualityInfoDialog by viewModel.showAirQualityInfoDialog.collectAsState()
-    val clickedAirQuality by viewModel.clickedAirQuality.collectAsState()
-    val gptAlerts by viewModel.gptWeatherAlerts.collectAsState()
+    val currentWeather by viewModel.currentWeather.collectAsStateWithLifecycle()
+    val loading by viewModel.loading.collectAsStateWithLifecycle()
+    val loadingAlerts by viewModel.loading2.collectAsStateWithLifecycle()
+    val error by viewModel.error.collectAsStateWithLifecycle()
+    val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
+    val refreshing by viewModel.refreshing.collectAsStateWithLifecycle()
+    val retrievedWeather by viewModel.retrievedWeather.collectAsStateWithLifecycle()
+    val showAlertInfoDialog by viewModel.showAlertInfoDialog.collectAsStateWithLifecycle()
+    val clickedAlert by viewModel.clickedAlert.collectAsStateWithLifecycle()
+    val showAirQualityInfoDialog by viewModel.showAirQualityInfoDialog.collectAsStateWithLifecycle()
+    val clickedAirQuality by viewModel.clickedAirQuality.collectAsStateWithLifecycle()
+    val gptAlerts by viewModel.gptWeatherAlerts.collectAsStateWithLifecycle()
 
     var hasPermissions by rememberSaveable { mutableStateOf<Boolean?>(null) }
     val swipeRefreshState = rememberPullRefreshState(refreshing)
