@@ -80,7 +80,10 @@ class GptRepository @Inject constructor(
                         }
                         emit(gptResponse)
                     } ?: run {
-                        Log.e("GptRepository", "Error")
+                        Log.e(
+                            "GptRepository",
+                            "Body null: ${response.code()} ${response.errorBody()?.string()}"
+                        )
                         emit(null)
                     }
                 }
