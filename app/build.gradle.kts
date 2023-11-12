@@ -1,4 +1,3 @@
-import org.gradle.internal.impldep.org.eclipse.jgit.lib.InflaterCache.release
 import java.io.FileInputStream
 import java.util.Properties
 
@@ -45,6 +44,7 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+            isDebuggable = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
