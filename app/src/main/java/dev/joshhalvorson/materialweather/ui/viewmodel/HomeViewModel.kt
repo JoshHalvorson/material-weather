@@ -11,6 +11,7 @@ import com.google.firebase.ktx.Firebase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.joshhalvorson.materialweather.data.models.weather.AirQuality
 import dev.joshhalvorson.materialweather.data.models.weather.ForecastResponse
+import dev.joshhalvorson.materialweather.data.models.weather.Hour
 import dev.joshhalvorson.materialweather.data.models.weather.Severity
 import dev.joshhalvorson.materialweather.data.models.weather.WeatherAlert
 import dev.joshhalvorson.materialweather.data.repository.gpt.GptRepository
@@ -21,6 +22,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.format.DateTimeParseException
+import java.util.TimeZone
 import javax.inject.Inject
 
 @HiltViewModel
@@ -180,5 +185,16 @@ class HomeViewModel @Inject constructor(
                 mRefreshing.emit(false)
                 mRetrievedWeather.emit(true)
             }
+    }
+
+    fun isCurrentHour(hour: Hour): Boolean {
+        return try {
+            val localTime = LocalDateTime.ofInstant(
+                Instant.ofEpochSecond(hour.timeEpoch), TimeZone.getDefault().toZoneId()
+            )
+            localTime.hour == LocalDateTime.now().hour
+        } catch (e: DateTimeParseException) {
+            false
+        }
     }
 }
