@@ -191,7 +191,9 @@ class HomeViewModel @Inject constructor(
             val localTime = LocalDateTime.ofInstant(
                 Instant.ofEpochSecond(hour.timeEpoch), TimeZone.getDefault().toZoneId()
             )
-            localTime.hour == LocalDateTime.now().hour
+            val now = LocalDateTime.now()
+
+            localTime.dayOfWeek == now.dayOfWeek && localTime.hour == now.hour
         } catch (e: DateTimeParseException) {
             false
         }
