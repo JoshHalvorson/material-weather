@@ -159,7 +159,7 @@ private fun HourlyItem(
 ) {
     val currentHourModifier = if (isCurrentHour(hourlyProvider())) {
         Modifier.background(
-            MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = .3f)
+            MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = .2f)
         )
     } else {
         Modifier
@@ -170,17 +170,18 @@ private fun HourlyItem(
         verticalArrangement = Arrangement.spacedBy(4.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Box(
-            contentAlignment = Alignment.CenterEnd
-        ) {
+        Box(contentAlignment = Alignment.CenterEnd) {
+            val textModifier = Modifier.padding(top = 4.dp)
+
             Text(
+                modifier = textModifier,
                 text = hourlyProvider().getTimeDisplay(),
                 style = MaterialTheme.typography.labelSmall
             )
 
             // Placeholder
             Text(
-                modifier = Modifier
+                modifier = textModifier
                     .alpha(0f)
                     .semantics { contentDescription = "" },
                 text = "12:00 AM",
