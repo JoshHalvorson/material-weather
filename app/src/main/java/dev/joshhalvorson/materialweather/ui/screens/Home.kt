@@ -19,13 +19,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -56,6 +60,7 @@ import dev.joshhalvorson.materialweather.ui.theme.weatherCard
 import dev.joshhalvorson.materialweather.ui.viewmodel.HomeViewModel
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
     // State
@@ -74,6 +79,8 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
 
     var hasPermissions by rememberSaveable { mutableStateOf<Boolean?>(null) }
     val swipeRefreshState = rememberPullRefreshState(refreshing)
+    val sheetState = rememberModalBottomSheetState()
+    val scope = rememberCoroutineScope()
 
     val context = LocalContext.current
     val requestLocationPermissionLauncher =
@@ -149,48 +156,6 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
             confirmButton = {
                 TextButton(
                     onClick = { requestPermissions() }
-                ) {
-                    Text(text = stringResource(R.string.ok))
-                }
-            },
-        )
-    }
-
-    /**
-     * This is the dialog that shows when click on a weather alert
-     */
-    if (showAlertInfoDialog && clickedAlert != null) {
-        AlertDialog(
-            title = {
-                Text(
-                    text = clickedAlert?.event ?: "",
-                    style = MaterialTheme.typography.titleMedium
-                )
-            },
-            text = {
-                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                    MarkdownText(
-                        markdown = clickedAlert?.desc ?: "",
-                        style = androidx.compose.material3.LocalTextStyle.current.copy(
-                            color = MaterialTheme.colorScheme.onSurface,
-                        ),
-                    )
-
-                    if (clickedAlert?.isGenerative == true) {
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Text(
-                            text = stringResource(R.string.generated_weather_alert_disclaimer),
-                            fontSize = 9.sp,
-                            fontStyle = FontStyle.Italic
-                        )
-                    }
-                }
-            },
-            onDismissRequest = { viewModel.onAlertInfoDialogClosed() },
-            confirmButton = {
-                TextButton(
-                    onClick = { viewModel.onAlertInfoDialogClosed() }
                 ) {
                     Text(text = stringResource(R.string.ok))
                 }
@@ -344,6 +309,49 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
 
                 // For spacing
                 Box {}
+            }
+        }
+    }
+
+    /**
+     * This is the weather alert bottom sheet
+     */
+    if (showAlertInfoDialog && clickedAlert != null) {
+        ModalBottomSheet(
+            sheetState = sheetState,
+            onDismissRequest = viewModel::onAlertInfoDialogClosed
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = clickedAlert?.event ?: "",
+                    style = MaterialTheme.typography.titleLarge
+                )
+
+                Column(
+                    modifier = Modifier
+                        .padding(bottom = 16.dp)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    MarkdownText(
+                        markdown = clickedAlert?.desc ?: "",
+                        style = androidx.compose.material3.LocalTextStyle.current.copy(
+                            color = MaterialTheme.colorScheme.onSurface,
+                        ),
+                    )
+
+                    if (clickedAlert?.isGenerative == true) {
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Text(
+                            text = stringResource(R.string.generated_weather_alert_disclaimer),
+                            fontSize = 9.sp,
+                            fontStyle = FontStyle.Italic
+                        )
+                    }
+                }
             }
         }
     }
