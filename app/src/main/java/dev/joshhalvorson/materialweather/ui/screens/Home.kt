@@ -18,8 +18,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
@@ -49,6 +53,7 @@ import dev.joshhalvorson.materialweather.ui.components.AirQualityCard
 import dev.joshhalvorson.materialweather.ui.components.AlertsCard
 import dev.joshhalvorson.materialweather.ui.components.AstroCard
 import dev.joshhalvorson.materialweather.ui.components.CurrentWeatherCard
+import dev.joshhalvorson.materialweather.ui.components.MaterialWeatherTopAppBar
 import dev.joshhalvorson.materialweather.ui.components.PullRefresh
 import dev.joshhalvorson.materialweather.ui.components.UvCard
 import dev.joshhalvorson.materialweather.ui.components.WeekForecastCard
@@ -57,10 +62,11 @@ import dev.joshhalvorson.materialweather.ui.components.weatherPlaceholder
 import dev.joshhalvorson.materialweather.ui.theme.card
 import dev.joshhalvorson.materialweather.ui.theme.weatherCard
 import dev.joshhalvorson.materialweather.ui.viewmodel.HomeViewModel
+import dev.joshhalvorson.materialweather.util.navigation.NavigationRoute
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
+fun HomeScreen(viewModel: HomeViewModel = hiltViewModel(), navigateTo: (NavigationRoute) -> Unit) {
     // State
     val currentWeather by viewModel.currentWeather.collectAsStateWithLifecycle()
     val loading by viewModel.loading.collectAsStateWithLifecycle()
@@ -224,91 +230,106 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
     /**
      * Main content
      */
-    PullRefresh(swipeRefreshState = swipeRefreshState, onRefresh = viewModel::refreshWeather) {
-        Column(
-            modifier = Modifier.verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
-        ) {
-            if (!error) {
-                CurrentWeatherCard(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(IntrinsicSize.Max)
-                        .weatherPlaceholder(
-                            visible = loading,
-                            shape = MaterialTheme.shapes.weatherCard
-                        ),
-                    currentWeather = currentWeather,
-                    loading = loading
-                )
-
-                AlertsCard(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                        .weatherPlaceholder(visible = loadingAlerts),
-                    loading = loadingAlerts,
-                    alerts = currentWeather?.alerts,
-                    dialogVisible = showAlertInfoDialog,
-                    generativeAlert = generativeAlert,
-                    onAlertClicked = viewModel::onAlertClicked
-                )
-
-                WeekForecastCard(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                        .weatherPlaceholder(visible = loading),
-                    forecast = currentWeather,
-                    loading = loading,
-                    isCurrentHour = viewModel::isCurrentHour
-                )
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(IntrinsicSize.Max)
-                        .padding(horizontal = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    AirQualityCard(
-                        modifier = Modifier
-                            .padding(horizontal = 8.dp)
-                            .weight(1f)
-                            .weatherPlaceholder(visible = loading)
-                            .clip(MaterialTheme.shapes.card)
-                            .clickable {
-                                viewModel.onAirQualityClicked(airQuality = currentWeather?.current?.airQuality)
-                            },
-                        loading = loading,
-                        airQuality = currentWeather?.current?.airQuality
-                    )
-                    UvCard(
-                        modifier = Modifier
-                            .padding(horizontal = 8.dp)
-                            .fillMaxHeight()
-                            .weight(1f)
-                            .weatherPlaceholder(visible = loading),
-                        loading = loading,
-                        uvIndex = currentWeather?.current?.uv
+    Column {
+        MaterialWeatherTopAppBar(
+            title = stringResource(R.string.forecast_title),
+            actions = {
+                IconButton(onClick = { navigateTo(NavigationRoute.Settings) }) {
+                    Icon(
+                        imageVector = Icons.Filled.Settings,
+                        contentDescription = stringResource(R.string.settings)
                     )
                 }
 
-                AstroCard(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                        .weatherPlaceholder(visible = loading),
-                    loading = loading,
-                    astroData = currentWeather?.forecast?.forecastday?.firstOrNull()?.astroData
-                )
+            }
+        )
+        PullRefresh(swipeRefreshState = swipeRefreshState, onRefresh = viewModel::refreshWeather) {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(24.dp)
+            ) {
+                if (!error) {
+                    CurrentWeatherCard(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(IntrinsicSize.Max)
+                            .weatherPlaceholder(
+                                visible = loading,
+                                shape = MaterialTheme.shapes.weatherCard
+                            ),
+                        currentWeather = currentWeather,
+                        loading = loading
+                    )
 
-                // For spacing
-                Box {}
+                    AlertsCard(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                            .weatherPlaceholder(visible = loadingAlerts),
+                        loading = loadingAlerts,
+                        alerts = currentWeather?.alerts,
+                        dialogVisible = showAlertInfoDialog,
+                        generativeAlert = generativeAlert,
+                        onAlertClicked = viewModel::onAlertClicked
+                    )
+
+                    WeekForecastCard(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                            .weatherPlaceholder(visible = loading),
+                        forecast = currentWeather,
+                        loading = loading,
+                        isCurrentHour = viewModel::isCurrentHour
+                    )
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(IntrinsicSize.Max)
+                            .padding(horizontal = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        AirQualityCard(
+                            modifier = Modifier
+                                .padding(horizontal = 8.dp)
+                                .weight(1f)
+                                .weatherPlaceholder(visible = loading)
+                                .clip(MaterialTheme.shapes.card)
+                                .clickable {
+                                    viewModel.onAirQualityClicked(airQuality = currentWeather?.current?.airQuality)
+                                },
+                            loading = loading,
+                            airQuality = currentWeather?.current?.airQuality
+                        )
+                        UvCard(
+                            modifier = Modifier
+                                .padding(horizontal = 8.dp)
+                                .fillMaxHeight()
+                                .weight(1f)
+                                .weatherPlaceholder(visible = loading),
+                            loading = loading,
+                            uvIndex = currentWeather?.current?.uv
+                        )
+                    }
+
+                    AstroCard(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                            .weatherPlaceholder(visible = loading),
+                        loading = loading,
+                        astroData = currentWeather?.forecast?.forecastday?.firstOrNull()?.astroData
+                    )
+
+                    // For spacing
+                    Box {}
+                }
             }
         }
     }
+
 
     /**
      * This is the weather alert bottom sheet

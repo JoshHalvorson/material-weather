@@ -2,24 +2,44 @@ package dev.joshhalvorson.materialweather.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import dev.joshhalvorson.materialweather.R
+import dev.joshhalvorson.materialweather.ui.components.MaterialWeatherTopAppBar
+import dev.joshhalvorson.materialweather.util.navigation.NavigationRoute
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen() {
-    Column(modifier = Modifier.fillMaxSize()) {
+fun SettingsScreen(navigateTo: (NavigationRoute) -> Unit) {
+    /**
+     * Main content
+     */
+    Column {
+        MaterialWeatherTopAppBar(
+            title = stringResource(R.string.settings_title),
+            navigationIcon = {
+                IconButton(onClick = { navigateTo(NavigationRoute.Back) }) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = stringResource(R.string.back)
+                    )
+                }
+            }
+        )
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            modifier = Modifier.verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            Text(text = "Settings", style = MaterialTheme.typography.headlineSmall)
 
-            // TODO
         }
     }
 }
