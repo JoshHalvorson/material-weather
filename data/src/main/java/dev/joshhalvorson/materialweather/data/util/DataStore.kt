@@ -9,6 +9,6 @@ import androidx.datastore.preferences.preferencesDataStore
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
 object Key {
-    val LAST_GPT_ALERT = stringPreferencesKey("last_gpt_alert")
-    val GPT_ALERT_TEXT = stringPreferencesKey("gpt_alert_text")
+    val LAST_GENERATED_ALERT = stringPreferencesKey("last_generated_alert")
+    val GENERATED_ALERT_TEXT = stringPreferencesKey("generated_alert_text")
 }

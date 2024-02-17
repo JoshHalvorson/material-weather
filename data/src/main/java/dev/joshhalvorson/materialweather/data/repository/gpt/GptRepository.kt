@@ -11,6 +11,7 @@ import dev.joshhalvorson.materialweather.data.models.weather.Day
 import dev.joshhalvorson.materialweather.data.remote.gpt.GptApi
 import dev.joshhalvorson.materialweather.data.util.Key
 import dev.joshhalvorson.materialweather.data.util.dataStore
+import dev.joshhalvorson.materialweather.data.util.getGenerativeWeatherAlertPrompt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flow
@@ -35,10 +36,10 @@ class GptRepository @Inject constructor(
         flow {
             try {
                 val lastGptAlert = context.dataStore.data.map { preferences ->
-                    preferences[Key.LAST_GPT_ALERT] ?: ""
+                    preferences[Key.LAST_GENERATED_ALERT] ?: ""
                 }
                 val gptAlertText = context.dataStore.data.map { preferences ->
-                    preferences[Key.GPT_ALERT_TEXT] ?: ""
+                    preferences[Key.GENERATED_ALERT_TEXT] ?: ""
                 }
                 val lastGptAlertTime = LocalDateTime.ofInstant(
                     Instant.ofEpochMilli(lastGptAlert.firstOrNull()?.takeIf { it.isNotEmpty() }
@@ -67,15 +68,19 @@ class GptRepository @Inject constructor(
                 } else {
                     val response = gptApi.getWeatherAlerts(
                         requestBody = GptRequestBody(
-                            prompt = "Can you give me an interesting piece of information in tomorrows weather ($tomorrowsWeather) in $unit units, ignoring the high and low temperatures, rain, and snow, phrased as a sentence. Also please round any number with a decimal to the nearest whole number"
+                            prompt = getGenerativeWeatherAlertPrompt(
+                                tomorrowsWeather = tomorrowsWeather,
+                                unit = unit
+                            )
                         )
                     )
 
                     response.body()?.let { gptResponse ->
                         Log.i("GptRepository", "$gptResponse")
                         context.dataStore.edit { settings ->
-                            settings[Key.LAST_GPT_ALERT] = System.currentTimeMillis().toString()
-                            settings[Key.GPT_ALERT_TEXT] =
+                            settings[Key.LAST_GENERATED_ALERT] =
+                                System.currentTimeMillis().toString()
+                            settings[Key.GENERATED_ALERT_TEXT] =
                                 gptResponse.choices.firstOrNull()?.text ?: ""
                         }
                         emit(gptResponse)

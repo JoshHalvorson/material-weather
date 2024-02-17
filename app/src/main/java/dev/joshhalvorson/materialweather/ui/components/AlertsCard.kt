@@ -3,19 +3,14 @@ package dev.joshhalvorson.materialweather.ui.components
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.PageSize
-import androidx.compose.foundation.pager.PagerDefaults
-import androidx.compose.foundation.pager.PagerScope
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
@@ -50,7 +45,7 @@ fun AlertsCard(
     modifier: Modifier = Modifier,
     loading: Boolean,
     alerts: Alerts?,
-    gptAlerts: List<WeatherAlert>,
+    generativeAlert: WeatherAlert?,
     dialogVisible: Boolean,
     onAlertClicked: (WeatherAlert) -> Unit
 ) {
@@ -70,13 +65,13 @@ fun AlertsCard(
             CardContent(
                 alerts = alerts,
                 dialogVisible = dialogVisible,
-                gptAlerts = gptAlerts,
+                generativeAlert = generativeAlert,
                 onActiveAlertChanged = { activeAlert = it })
         } else if (loading) {
             CardContent(
                 alerts = Alerts.LOADING_DATA,
                 dialogVisible = dialogVisible,
-                gptAlerts = gptAlerts,
+                generativeAlert = generativeAlert,
                 onActiveAlertChanged = {})
         }
     }
@@ -86,11 +81,12 @@ fun AlertsCard(
 @Composable
 private fun CardContent(
     alerts: Alerts,
-    gptAlerts: List<WeatherAlert>,
+    generativeAlert: WeatherAlert?,
     dialogVisible: Boolean,
     onActiveAlertChanged: (WeatherAlert) -> Unit
 ) {
-    val alertsToShow = if (gptAlerts.isEmpty()) alerts.allAlerts else alerts.alert + gptAlerts
+    val alertsToShow =
+        if (generativeAlert?.desc.isNullOrEmpty()) alerts.allAlerts else alerts.alert + generativeAlert!!
     val pagerState = rememberPagerState(
         initialPage = 0,
         initialPageOffsetFraction = 0f

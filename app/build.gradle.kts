@@ -108,4 +108,6 @@ dependencies {
 
     implementation("com.google.firebase:firebase-crashlytics-ktx:18.6.2")
     implementation("com.google.firebase:firebase-analytics-ktx:21.5.1")
+
+    implementation("com.github.jeziellago:compose-markdown:0.4.1")
 }

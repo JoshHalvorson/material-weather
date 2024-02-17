@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -32,17 +33,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.android.gms.location.LocationServices
+import dev.jeziellago.compose.markdowntext.MarkdownText
 import dev.joshhalvorson.materialweather.R
 import dev.joshhalvorson.materialweather.ui.components.AirQualityCard
 import dev.joshhalvorson.materialweather.ui.components.AlertsCard
 import dev.joshhalvorson.materialweather.ui.components.AstroCard
 import dev.joshhalvorson.materialweather.ui.components.CurrentWeatherCard
-import dev.joshhalvorson.materialweather.ui.components.LinkifyText
 import dev.joshhalvorson.materialweather.ui.components.PullRefresh
 import dev.joshhalvorson.materialweather.ui.components.UvCard
 import dev.joshhalvorson.materialweather.ui.components.WeekForecastCard
@@ -67,7 +70,7 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
     val clickedAlert by viewModel.clickedAlert.collectAsStateWithLifecycle()
     val showAirQualityInfoDialog by viewModel.showAirQualityInfoDialog.collectAsStateWithLifecycle()
     val clickedAirQuality by viewModel.clickedAirQuality.collectAsStateWithLifecycle()
-    val gptAlerts by viewModel.gptWeatherAlerts.collectAsStateWithLifecycle()
+    val generativeAlert by viewModel.generativeWeatherAlert.collectAsStateWithLifecycle()
 
     var hasPermissions by rememberSaveable { mutableStateOf<Boolean?>(null) }
     val swipeRefreshState = rememberPullRefreshState(refreshing)
@@ -120,6 +123,9 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
         )
     }
 
+    /**
+     * This is the permissions rationale dialog
+     */
     if (hasPermissions == false) {
         AlertDialog(
             title = {
@@ -150,6 +156,9 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
         )
     }
 
+    /**
+     * This is the dialog that shows when click on a weather alert
+     */
     if (showAlertInfoDialog && clickedAlert != null) {
         AlertDialog(
             title = {
@@ -159,10 +168,25 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
                 )
             },
             text = {
-                LinkifyText(
-                    modifier = Modifier.verticalScroll(rememberScrollState()),
-                    text = clickedAlert?.desc
-                )
+                Column {
+                    MarkdownText(
+                        modifier = Modifier.verticalScroll(rememberScrollState()),
+                        markdown = clickedAlert?.desc ?: "",
+                        style = androidx.compose.material3.LocalTextStyle.current.copy(
+                            color = MaterialTheme.colorScheme.onSurface,
+                        ),
+                    )
+
+                    if (clickedAlert?.isGenerative == true) {
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Text(
+                            text = stringResource(R.string.generated_weather_alert_disclaimer),
+                            fontSize = 9.sp,
+                            fontStyle = FontStyle.Italic
+                        )
+                    }
+                }
             },
             onDismissRequest = { viewModel.onAlertInfoDialogClosed() },
             confirmButton = {
@@ -175,6 +199,9 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
         )
     }
 
+    /**
+     * This is the air quality index dialog
+     */
     if (showAirQualityInfoDialog && clickedAirQuality != null) {
         AlertDialog(
             title = {
@@ -224,12 +251,18 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
         )
     }
 
+    /**
+     * Error state
+     */
     if (!loading && error) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text(text = errorMessage)
         }
     }
 
+    /**
+     * Main content
+     */
     PullRefresh(swipeRefreshState = swipeRefreshState, onRefresh = viewModel::refreshWeather) {
         Column(
             modifier = Modifier.verticalScroll(rememberScrollState()),
@@ -256,7 +289,7 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
                     loading = loadingAlerts,
                     alerts = currentWeather?.alerts,
                     dialogVisible = showAlertInfoDialog,
-                    gptAlerts = gptAlerts,
+                    generativeAlert = generativeAlert,
                     onAlertClicked = viewModel::onAlertClicked
                 )
 

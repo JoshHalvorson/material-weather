@@ -39,4 +39,5 @@
     <string name="pm2_5">PM2.5</string>
     <string name="pm10">PM10</string>
     <string name="g_m3">%1$s μg/m3</string>
+    <string name="generated_weather_alert_disclaimer">This alert was created using a generative AI model</string>
 </resources>
