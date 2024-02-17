@@ -168,9 +168,8 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
                 )
             },
             text = {
-                Column {
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                     MarkdownText(
-                        modifier = Modifier.verticalScroll(rememberScrollState()),
                         markdown = clickedAlert?.desc ?: "",
                         style = androidx.compose.material3.LocalTextStyle.current.copy(
                             color = MaterialTheme.colorScheme.onSurface,
