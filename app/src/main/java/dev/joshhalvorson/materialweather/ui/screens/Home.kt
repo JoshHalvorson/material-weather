@@ -29,7 +29,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -59,7 +58,6 @@ import dev.joshhalvorson.materialweather.ui.theme.card
 import dev.joshhalvorson.materialweather.ui.theme.weatherCard
 import dev.joshhalvorson.materialweather.ui.viewmodel.HomeViewModel
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
@@ -80,7 +78,6 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
     var hasPermissions by rememberSaveable { mutableStateOf<Boolean?>(null) }
     val swipeRefreshState = rememberPullRefreshState(refreshing)
     val sheetState = rememberModalBottomSheetState()
-    val scope = rememberCoroutineScope()
 
     val context = LocalContext.current
     val requestLocationPermissionLauncher =
