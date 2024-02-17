@@ -26,6 +26,7 @@ android {
 
         buildConfigField("String", "API_KEY", localProperties.getProperty("api_key"))
         buildConfigField("String", "GPT_KEY", localProperties.getProperty("gpt_key"))
+        buildConfigField("String", "GEMINI_KEY", localProperties.getProperty("gemini_key"))
     }
 
     buildTypes {
@@ -75,4 +76,6 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 
     api("androidx.datastore:datastore-preferences:1.0.0")
+
+    implementation("com.google.ai.client.generativeai:generativeai:0.2.0")
 }

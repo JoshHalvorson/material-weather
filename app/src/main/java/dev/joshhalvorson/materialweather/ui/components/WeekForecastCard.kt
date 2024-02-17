@@ -9,20 +9,26 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -38,7 +44,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import dev.joshhalvorson.materialweather.R
-import dev.joshhalvorson.materialweather.data.models.weather.Day
 import dev.joshhalvorson.materialweather.data.models.weather.ForecastResponse
 import dev.joshhalvorson.materialweather.data.models.weather.Forecastday
 import dev.joshhalvorson.materialweather.data.models.weather.Hour
@@ -47,84 +52,150 @@ import dev.joshhalvorson.materialweather.data.models.weather.Hour
 fun WeekForecastCard(
     modifier: Modifier = Modifier,
     loading: Boolean,
-    forecast: ForecastResponse?
+    forecast: ForecastResponse?,
+    isCurrentHour: (Hour) -> Boolean,
 ) {
     WeatherCard(modifier = modifier) {
         if (forecast != null) {
-            CardContent(forecasts = forecast.forecast.forecastday)
+            CardContent(
+                forecasts = forecast.forecast.forecastday,
+                isCurrentHour = isCurrentHour
+            )
         } else if (loading) {
-            CardContent(forecasts = ForecastResponse.LOADING_DATA.forecast.forecastday)
+            CardContent(
+                forecasts = ForecastResponse.LOADING_DATA.forecast.forecastday,
+                isCurrentHour = isCurrentHour
+            )
         }
     }
 }
 
 @Composable
-private fun CardContent(forecasts: List<Forecastday>) {
+private fun CardContent(
+    forecasts: List<Forecastday>,
+    isCurrentHour: (Hour) -> Boolean
+) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.Start
     ) {
         forecasts.forEachIndexed { index, forecastDay ->
+            val lazyListState = rememberLazyListState()
+
             val isFirst = index == 0
             var expanded by rememberSaveable { mutableStateOf(isFirst) }
+            var indexToScrollTo by rememberSaveable { mutableIntStateOf(-1) }
+
+            LaunchedEffect(Unit) {
+                if (isFirst && indexToScrollTo == -1) {
+                    indexToScrollTo = forecastDay.hour.indexOfFirst { isCurrentHour(it) }
+                    if (indexToScrollTo != -1) {
+                        lazyListState.scrollToItem(indexToScrollTo)
+                    }
+                }
+            }
 
             DayItem(
+                lazyListState = lazyListState,
                 wrapper = forecastDay,
                 expanded = if (isFirst) true else expanded,
-                onClicked = { expanded = !expanded })
+                onClicked = { expanded = !expanded },
+                isCurrentHour = isCurrentHour,
+                isLast = index == forecasts.lastIndex
+            )
         }
     }
 }
 
 @Composable
-private fun DayItem(wrapper: Forecastday, expanded: Boolean, onClicked: () -> Unit) {
+private fun DayItem(
+    lazyListState: LazyListState,
+    wrapper: Forecastday,
+    expanded: Boolean,
+    onClicked: () -> Unit,
+    isCurrentHour: (Hour) -> Boolean,
+    isLast: Boolean,
+) {
     Row(modifier = Modifier.clickable { onClicked() }) {
         Column(modifier = Modifier.animateContentSize()) {
             DayForecast(dayWeather = wrapper)
             if (expanded) {
-                HourlyForecast(wrapper = wrapper)
+                HourlyForecast(
+                    state = lazyListState,
+                    wrapper = wrapper,
+                    isCurrentHour = isCurrentHour
+                )
                 Spacer(modifier = Modifier.height(16.dp))
+            }
+            if (!isLast) {
+                Divider()
             }
         }
     }
 }
 
 @Composable
-private fun HourlyForecast(wrapper: Forecastday) {
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .height(250.dp),
-        horizontalAlignment = Alignment.Start,
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        items(items = wrapper.hour, key = { it.timeEpoch }) {
-            HourlyItem(dayForecastProvider = { wrapper.day }, hourlyProvider = { it })
+private fun HourlyForecast(
+    state: LazyListState,
+    wrapper: Forecastday,
+    isCurrentHour: (Hour) -> Boolean
+) {
+    LazyRow(modifier = Modifier.fillMaxWidth(), state = state) {
+        itemsIndexed(items = wrapper.hour, key = { index, item -> item.timeEpoch }) { index, item ->
+            HourlyItem(
+                forecastProvider = { wrapper },
+                hourlyProvider = { item },
+                isCurrentHour = isCurrentHour
+            )
         }
     }
 }
 
 @Composable
-private fun HourlyItem(dayForecastProvider: () -> Day, hourlyProvider: () -> Hour) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(4.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-        verticalAlignment = Alignment.CenterVertically
+private fun HourlyItem(
+    forecastProvider: () -> Forecastday,
+    hourlyProvider: () -> Hour,
+    isCurrentHour: (Hour) -> Boolean,
+) {
+    val currentHourModifier = if (isCurrentHour(hourlyProvider())) {
+        Modifier.background(
+            MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = .2f)
+        )
+    } else {
+        Modifier
+    }
+
+    Column(
+        modifier = currentHourModifier.width(80.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        Box(contentAlignment = Alignment.CenterEnd) {
+            val textModifier = Modifier.padding(top = 4.dp)
+
+            Text(
+                modifier = textModifier,
+                text = hourlyProvider().getTimeDisplay(),
+                style = MaterialTheme.typography.labelSmall
+            )
+
+            // Placeholder
+            Text(
+                modifier = textModifier
+                    .alpha(0f)
+                    .semantics { contentDescription = "" },
+                text = "12:00 AM",
+                style = MaterialTheme.typography.labelSmall
+            )
+        }
+
         AsyncImage(
             modifier = Modifier.size(16.dp),
             model = hourlyProvider().condition.getIconUrl(),
             contentDescription = null
         )
 
-        // TODO add metric support
-        Text(
-            text = hourlyProvider().getCurrentTempF(),
-            style = MaterialTheme.typography.labelSmall
-        )
+
 
         Box(
             contentAlignment = Alignment.CenterEnd
@@ -138,36 +209,29 @@ private fun HourlyItem(dayForecastProvider: () -> Day, hourlyProvider: () -> Hou
             )
         }
 
-        Box(
-            contentAlignment = Alignment.CenterEnd
-        ) {
-            Text(
-                text = hourlyProvider().getTimeDisplay(),
-                style = MaterialTheme.typography.labelSmall
-            )
-
-            // Placeholder
-            Text(
-                modifier = Modifier
-                    .alpha(0f)
-                    .semantics { contentDescription = "" },
-                text = "12:00 AM",
-                style = MaterialTheme.typography.labelSmall
-            )
-        }
-
-        Spacer(Modifier.width(20.dp))
+        Spacer(Modifier.height(4.dp))
 
         // TODO add metric support
         TemperatureBar(
-            dailyMaxTemperature = dayForecastProvider().maxtempF.toInt(),
-            hourTemperature = hourlyProvider().tempF.toInt()
+            dailyMaxTemperature = forecastProvider().day.maxtempF.toInt(),
+            hourTemperature = hourlyProvider().tempF.toInt(),
+            tempText = {
+                // TODO add metric support
+                Text(
+                    text = hourlyProvider().getCurrentTempF(),
+                    style = MaterialTheme.typography.labelSmall
+                )
+            }
         )
     }
 }
 
 @Composable
-private fun TemperatureBar(dailyMaxTemperature: Int, hourTemperature: Int) {
+private fun TemperatureBar(
+    dailyMaxTemperature: Int,
+    hourTemperature: Int,
+    tempText: @Composable () -> Unit,
+) {
     val percentToFill by remember {
         derivedStateOf {
             val float = if (dailyMaxTemperature == 0) {
@@ -186,20 +250,20 @@ private fun TemperatureBar(dailyMaxTemperature: Int, hourTemperature: Int) {
         }
     }
 
-    Box {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(10.dp)
-                .background(color = MaterialTheme.colorScheme.outlineVariant)
-        )
+    Column(
+        modifier = Modifier
+            .fillMaxWidth(.75f)
+            .height(100.dp),
+        verticalArrangement = Arrangement.Bottom,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        tempText()
 
         Box(
             modifier = Modifier
-                .fillMaxWidth(percentToFill)
-                .height(10.dp)
-                .align(Alignment.CenterEnd)
-                .background(color = MaterialTheme.colorScheme.primary.copy(alpha = percentToFill))
+                .fillMaxHeight(percentToFill)
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.tertiaryContainer)
         )
     }
 }

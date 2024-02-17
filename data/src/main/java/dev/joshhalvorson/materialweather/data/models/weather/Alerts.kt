@@ -51,7 +51,8 @@ data class WeatherAlert(
     val expires: String = "",
     val desc: String = "",
     val instruction: String = "",
-    val differenceType: DifferenceType? = null
+    val differenceType: DifferenceType? = null,
+    val isGenerative: Boolean = false,
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
