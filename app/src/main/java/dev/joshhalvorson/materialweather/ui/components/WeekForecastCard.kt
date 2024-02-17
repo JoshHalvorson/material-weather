@@ -240,7 +240,7 @@ private fun TemperatureBar(
                 (hourTemperature.toFloat() / dailyMaxTemperature.toFloat()) * 100f
             }
 
-            if (float == 100f) {
+            if (float >= 100f) {
                 1f
             } else if (float != 0f) {
                 ".${float.toString().replace(".", "")}".toFloat()
