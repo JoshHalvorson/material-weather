@@ -7,8 +7,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.joshhalvorson.materialweather.R
+import dev.joshhalvorson.materialweather.data.models.location.SavedLocation
+import dev.joshhalvorson.materialweather.data.util.activeLocationFlow
+import dev.joshhalvorson.materialweather.data.util.locationOptionFlow
 import dev.joshhalvorson.materialweather.data.util.physicalUnitsFlow
+import dev.joshhalvorson.materialweather.data.util.savedLocationsFlow
+import dev.joshhalvorson.materialweather.data.util.storeActiveLocation
 import dev.joshhalvorson.materialweather.data.util.storeHasChangedUnit
+import dev.joshhalvorson.materialweather.data.util.storeLocationOption
 import dev.joshhalvorson.materialweather.data.util.storePhysicalUnits
 import dev.joshhalvorson.materialweather.data.util.storeTemperatureUnits
 import dev.joshhalvorson.materialweather.data.util.storeTriggerRefresh
@@ -23,7 +29,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    private val application: Application
+    private val application: Application,
 ) : ViewModel() {
     val themeOptions = listOf(
         application.getString(R.string.system),
@@ -38,6 +44,10 @@ class SettingsViewModel @Inject constructor(
         application.getString(R.string.imperial),
         application.getString(R.string.metric)
     )
+    val locationOptions = listOf(
+        application.getString(R.string.device),
+        application.getString(R.string.set)
+    )
 
     private val mThemeSelectedIndex = MutableStateFlow(0)
     val themeSelectedIndex = mThemeSelectedIndex.asStateFlow()
@@ -48,40 +58,66 @@ class SettingsViewModel @Inject constructor(
     private val mUnitsSelectedIndex = MutableStateFlow(0)
     val unitsSelectedIndex = mUnitsSelectedIndex.asStateFlow()
 
+    private val mLocationSelectedIndex = MutableStateFlow(0)
+    val locationSelectedIndex = mLocationSelectedIndex.asStateFlow()
+
+    private val mNavigateToLocationSearch = MutableStateFlow(false)
+    val navigateToLocationSearch = mNavigateToLocationSearch.asStateFlow()
+
+    private val mSavedLocationsVisible = MutableStateFlow(false)
+    val savedLocationsVisible = mSavedLocationsVisible.asStateFlow()
+
+    private val mSavedLocations = MutableStateFlow(emptyList<SavedLocation>())
+    val savedLocations = mSavedLocations.asStateFlow()
+
+    private val mActiveLocation = MutableStateFlow<SavedLocation?>(null)
+    val activeLocation = mActiveLocation.asStateFlow()
+
     init {
         getTempSetting()
         getThemeSetting()
         getUnitsSetting()
+        getLocationSetting()
+        getSavedLocations()
+        getActiveLocation()
     }
 
-    private fun getTempSetting() = viewModelScope.launch {
-        mTempSelectedIndex.emit(
-            temperatureOptions.indexOf(
-                application.applicationContext.temperatureUnitsFlow().first()
-                    ?: temperatureOptions.first()
-            )
-        )
+    fun resetNavigateToLocationSearch() = viewModelScope.launch {
+        mNavigateToLocationSearch.emit(false)
     }
 
-    private fun getThemeSetting() = viewModelScope.launch {
-        mThemeSelectedIndex.emit(
-            themeOptions.indexOf(
-                application.applicationContext.useDarkModeFlow().first() ?: themeOptions.first()
-            )
-        )
+    fun onSavedLocationClicked(savedLocation: SavedLocation) = viewModelScope.launch {
+        mActiveLocation.emit(savedLocation)
+        with(application.applicationContext) {
+            storeActiveLocation(savedLocation)
+            storeLocationOption(getString(R.string.set))
+            updateHomeState()
+        }
     }
 
-    private fun getUnitsSetting() = viewModelScope.launch {
-        mUnitsSelectedIndex.emit(
-            unitOptions.indexOf(
-                application.applicationContext.physicalUnitsFlow().first() ?: unitOptions.first()
-            )
-        )
-    }
+    fun onLocationClicked(index: Int, refresh: Boolean) = viewModelScope.launch {
+        mLocationSelectedIndex.emit(index)
+        when (val newSetting = locationOptions[mLocationSelectedIndex.value]) {
+            application.applicationContext.getString(R.string.set) -> {
+                if (mSavedLocations.value.isEmpty()) {
+                    mNavigateToLocationSearch.emit(true)
+                } else {
+                    mSavedLocationsVisible.emit(true)
+                }
+            }
 
-    private fun updateHomeState() = viewModelScope.launch {
-        application.applicationContext.storeTriggerRefresh(triggerRefresh = true)
-        application.applicationContext.storeHasChangedUnit(hasChangedUnit = true)
+            application.applicationContext.getString(R.string.device) -> {
+                if (refresh && application.applicationContext.activeLocationFlow()
+                        .first() != null
+                ) {
+                    updateHomeState()
+                }
+
+                application.applicationContext.storeLocationOption(locationOption = newSetting)
+                application.applicationContext.storeActiveLocation(activeLocation = null)
+                mSavedLocationsVisible.emit(false)
+            }
+        }
     }
 
     fun onUnitsClicked(index: Int) = viewModelScope.launch {
@@ -120,5 +156,62 @@ class SettingsViewModel @Inject constructor(
                 }
             }
         )
+    }
+
+    private fun getSavedLocations() = viewModelScope.launch {
+        mSavedLocations.emit(
+            application.applicationContext.savedLocationsFlow().first() ?: emptyList()
+        )
+        if (mSavedLocations.value.isNotEmpty() && mLocationSelectedIndex.value == locationOptions.indexOf(
+                application.applicationContext.getString(R.string.set)
+            )
+        ) {
+            mSavedLocationsVisible.emit(true)
+        }
+    }
+
+    private fun getActiveLocation() = viewModelScope.launch {
+        mActiveLocation.emit(
+            application.applicationContext.activeLocationFlow().first()
+        )
+    }
+
+    private fun getLocationSetting() = viewModelScope.launch {
+        mLocationSelectedIndex.emit(
+            locationOptions.indexOf(
+                application.applicationContext.locationOptionFlow().first()
+                    ?: locationOptions.first()
+            )
+        )
+    }
+
+    private fun getTempSetting() = viewModelScope.launch {
+        mTempSelectedIndex.emit(
+            temperatureOptions.indexOf(
+                application.applicationContext.temperatureUnitsFlow().first()
+                    ?: temperatureOptions.first()
+            )
+        )
+    }
+
+    private fun getThemeSetting() = viewModelScope.launch {
+        mThemeSelectedIndex.emit(
+            themeOptions.indexOf(
+                application.applicationContext.useDarkModeFlow().first() ?: themeOptions.first()
+            )
+        )
+    }
+
+    private fun getUnitsSetting() = viewModelScope.launch {
+        mUnitsSelectedIndex.emit(
+            unitOptions.indexOf(
+                application.applicationContext.physicalUnitsFlow().first() ?: unitOptions.first()
+            )
+        )
+    }
+
+    private fun updateHomeState() = viewModelScope.launch {
+        application.applicationContext.storeTriggerRefresh(triggerRefresh = true)
+        application.applicationContext.storeHasChangedUnit(hasChangedUnit = true)
     }
 }

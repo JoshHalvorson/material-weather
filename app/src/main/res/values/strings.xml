@@ -55,4 +55,8 @@
     <string name="celsius">Celsius</string>
     <string name="imperial">Imperial</string>
     <string name="metric">Metric</string>
+    <string name="device">Device</string>
+    <string name="set">Set</string>
+    <string name="location">Location</string>
+    <string name="forecast_location">Forecast location</string>
 </resources>

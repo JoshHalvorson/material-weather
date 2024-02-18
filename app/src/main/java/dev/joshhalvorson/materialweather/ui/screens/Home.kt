@@ -49,6 +49,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.android.gms.location.LocationServices
 import dev.jeziellago.compose.markdowntext.MarkdownText
 import dev.joshhalvorson.materialweather.R
+import dev.joshhalvorson.materialweather.data.util.locationOptionFlow
 import dev.joshhalvorson.materialweather.data.util.storeTriggerRefresh
 import dev.joshhalvorson.materialweather.data.util.triggerRefreshFlow
 import dev.joshhalvorson.materialweather.ui.components.AirQualityCard
@@ -85,6 +86,8 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel(), navigateTo: (Navigati
     val clickedAirQuality by viewModel.clickedAirQuality.collectAsStateWithLifecycle()
     val generativeAlert by viewModel.generativeWeatherAlert.collectAsStateWithLifecycle()
     val refresh by context.triggerRefreshFlow().collectAsStateWithLifecycle(initialValue = false)
+    val locationOption by context.locationOptionFlow()
+        .collectAsStateWithLifecycle(initialValue = "")
 
     var hasPermissions by rememberSaveable { mutableStateOf<Boolean?>(null) }
     val swipeRefreshState = rememberPullRefreshState(refreshing)
@@ -96,15 +99,8 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel(), navigateTo: (Navigati
         }
     val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
 
-    LaunchedEffect(refresh) {
-        if (refresh == true) {
-            viewModel.refreshWeather()
-            context.storeTriggerRefresh(triggerRefresh = false)
-        }
-    }
-
-    LaunchedEffect(hasPermissions) {
-        if (hasPermissions == true && !retrievedWeather) {
+    val getCurrentLocationWeather = {
+        if (hasPermissions == true && !retrievedWeather && locationOption == context.getString(R.string.device)) {
             fusedLocationClient.lastLocation.addOnSuccessListener { location ->
                 if (location != null) {
                     viewModel.getCurrentWeather(lat = location.latitude, lon = location.longitude)
@@ -115,18 +111,41 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel(), navigateTo: (Navigati
         }
     }
 
+    LaunchedEffect(refresh) {
+        if (refresh == true) {
+            viewModel.refreshWeather {
+                if (locationOption == context.getString(R.string.set)) {
+                    viewModel.getSavedLocationWeather()
+                } else if (locationOption == context.getString(R.string.device)) {
+                    getCurrentLocationWeather()
+                }
+            }
+            context.storeTriggerRefresh(triggerRefresh = false)
+        }
+    }
+
+    LaunchedEffect(hasPermissions) {
+        getCurrentLocationWeather()
+    }
+
+    LaunchedEffect(locationOption) {
+        if (locationOption == context.getString(R.string.set)) {
+            viewModel.getSavedLocationWeather()
+        } else if (locationOption == context.getString(R.string.device)) {
+            getCurrentLocationWeather()
+        }
+    }
+
     LaunchedEffect(Unit) {
         when (PackageManager.PERMISSION_GRANTED) {
             ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.ACCESS_FINE_LOCATION
+                context, Manifest.permission.ACCESS_FINE_LOCATION
             ) -> {
                 hasPermissions = true
             }
 
             ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.ACCESS_COARSE_LOCATION
+                context, Manifest.permission.ACCESS_COARSE_LOCATION
             ) -> {
                 hasPermissions = true
             }
@@ -138,8 +157,7 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel(), navigateTo: (Navigati
     val requestPermissions = {
         requestLocationPermissionLauncher.launch(
             arrayOf(
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION
+                Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION
             )
         )
     }
@@ -152,25 +170,20 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel(), navigateTo: (Navigati
             title = {
                 Text(
                     text = stringResource(
-                        R.string.permissions_dialog_title,
-                        stringResource(id = R.string.app_name)
-                    ),
-                    style = MaterialTheme.typography.titleMedium
+                        R.string.permissions_dialog_title, stringResource(id = R.string.app_name)
+                    ), style = MaterialTheme.typography.titleMedium
                 )
             },
             text = {
                 Text(
                     text = stringResource(
-                        R.string.permissions_dialog_text,
-                        stringResource(id = R.string.app_name)
+                        R.string.permissions_dialog_text, stringResource(id = R.string.app_name)
                     )
                 )
             },
             onDismissRequest = { requestPermissions() },
             confirmButton = {
-                TextButton(
-                    onClick = { requestPermissions() }
-                ) {
+                TextButton(onClick = { requestPermissions() }) {
                     Text(text = stringResource(R.string.ok))
                 }
             },
@@ -220,9 +233,7 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel(), navigateTo: (Navigati
             },
             onDismissRequest = { viewModel.onAirQualityInfoDialogClosed() },
             confirmButton = {
-                TextButton(
-                    onClick = { viewModel.onAirQualityInfoDialogClosed() }
-                ) {
+                TextButton(onClick = { viewModel.onAirQualityInfoDialogClosed() }) {
                     Text(text = stringResource(R.string.ok))
                 }
             },
@@ -242,19 +253,24 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel(), navigateTo: (Navigati
      * Main content
      */
     Column {
-        MaterialWeatherTopAppBar(
-            title = stringResource(R.string.forecast_title),
-            actions = {
-                IconButton(onClick = { navigateTo(NavigationRoute.Settings) }) {
-                    Icon(
-                        imageVector = Icons.Filled.Settings,
-                        contentDescription = stringResource(R.string.settings)
-                    )
-                }
-
+        MaterialWeatherTopAppBar(title = stringResource(R.string.forecast_title), actions = {
+            IconButton(onClick = { navigateTo(NavigationRoute.Settings) }) {
+                Icon(
+                    imageVector = Icons.Filled.Settings,
+                    contentDescription = stringResource(R.string.settings)
+                )
             }
-        )
-        PullRefresh(swipeRefreshState = swipeRefreshState, onRefresh = viewModel::refreshWeather) {
+
+        })
+        PullRefresh(swipeRefreshState = swipeRefreshState, onRefresh = {
+            viewModel.refreshWeather {
+                if (locationOption == context.getString(R.string.set)) {
+                    viewModel.getSavedLocationWeather()
+                } else if (locationOption == context.getString(R.string.device)) {
+                    getCurrentLocationWeather()
+                }
+            }
+        }) {
             Column(
                 modifier = Modifier.verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(24.dp)
@@ -265,11 +281,8 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel(), navigateTo: (Navigati
                             .fillMaxWidth()
                             .height(IntrinsicSize.Max)
                             .weatherPlaceholder(
-                                visible = loading,
-                                shape = MaterialTheme.shapes.weatherCard
-                            ),
-                        currentWeather = currentWeather,
-                        loading = loading
+                                visible = loading, shape = MaterialTheme.shapes.weatherCard
+                            ), currentWeather = currentWeather, loading = loading
                     )
 
                     AlertsCard(
@@ -347,16 +360,14 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel(), navigateTo: (Navigati
      */
     if (showAlertInfoDialog && clickedAlert != null) {
         ModalBottomSheet(
-            sheetState = sheetState,
-            onDismissRequest = viewModel::onAlertInfoDialogClosed
+            sheetState = sheetState, onDismissRequest = viewModel::onAlertInfoDialogClosed
         ) {
             Column(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    text = clickedAlert?.event ?: "",
-                    style = MaterialTheme.typography.titleLarge
+                    text = clickedAlert?.event ?: "", style = MaterialTheme.typography.titleLarge
                 )
 
                 Column(

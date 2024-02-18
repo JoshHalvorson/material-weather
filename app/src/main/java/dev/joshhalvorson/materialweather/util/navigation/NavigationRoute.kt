@@ -4,4 +4,5 @@ sealed class NavigationRoute {
     object Back : NavigationRoute()
     object Home : NavigationRoute()
     object Settings : NavigationRoute()
+    object LocationSearch : NavigationRoute()
 }

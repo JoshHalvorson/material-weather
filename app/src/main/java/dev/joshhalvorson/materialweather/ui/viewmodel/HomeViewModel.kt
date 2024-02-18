@@ -19,10 +19,12 @@ import dev.joshhalvorson.materialweather.data.models.weather.Severity
 import dev.joshhalvorson.materialweather.data.models.weather.WeatherAlert
 import dev.joshhalvorson.materialweather.data.repository.generativeweatherreport.GenerativeWeatherReportRepository
 import dev.joshhalvorson.materialweather.data.repository.weather.WeatherRepository
+import dev.joshhalvorson.materialweather.data.util.activeLocationFlow
 import dev.joshhalvorson.materialweather.data.util.hasChangedUnitFlow
 import dev.joshhalvorson.materialweather.data.util.physicalUnitsFlow
 import dev.joshhalvorson.materialweather.data.util.storeHasChangedUnit
 import dev.joshhalvorson.materialweather.data.util.temperatureUnitsFlow
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -42,6 +44,8 @@ class HomeViewModel @Inject constructor(
     private val weatherRepository: WeatherRepository,
     private val generativeWeatherReportRepository: GenerativeWeatherReportRepository
 ) : ViewModel() {
+    private var weatherJob: Job? = null
+
     private val mCurrentWeather = MutableStateFlow<ForecastResponse?>(null)
     val currentWeather = mCurrentWeather.asStateFlow()
 
@@ -118,33 +122,30 @@ class HomeViewModel @Inject constructor(
                 ?: application.applicationContext.getString(R.string.fahrenheit),
             unit = unitsSetting ?: application.applicationContext.getString(R.string.imperial),
             hasChangedUnit = hasChangedUnit ?: false
-        )
-            .onStart {
-                Log.i("HomeViewModel", "Getting generative alert")
+        ).onStart {
+            Log.i("HomeViewModel", "Getting generative alert")
 
-                application.applicationContext.storeHasChangedUnit(hasChangedUnit = false)
-                mLoading2.emit(true)
-            }
-            .catch {
-                Log.e("HomeViewModel", "Error Getting generative alert", it)
+            application.applicationContext.storeHasChangedUnit(hasChangedUnit = false)
+            mLoading2.emit(true)
+        }.catch {
+            Log.e("HomeViewModel", "Error Getting generative alert", it)
 
-                mError.emit(true)
-                mLoading2.emit(false)
-            }
-            .collect { response ->
-                mLoading2.emit(false)
-                response?.let { text ->
-                    mGenerativeWeatherAlert.emit(
-                        WeatherAlert(
-                            event = "Tomorrow",
-                            headline = text,
-                            desc = text,
-                            severity = Severity.Unknown.name,
-                            isGenerative = true
-                        )
+            mError.emit(true)
+            mLoading2.emit(false)
+        }.collect { response ->
+            mLoading2.emit(false)
+            response?.let { text ->
+                mGenerativeWeatherAlert.emit(
+                    WeatherAlert(
+                        event = "Tomorrow",
+                        headline = text,
+                        desc = text,
+                        severity = Severity.Unknown.name,
+                        isGenerative = true
                     )
-                }
+                )
             }
+        }
     }
 
     /**
@@ -156,8 +157,7 @@ class HomeViewModel @Inject constructor(
             .addOnSuccessListener { currentLocation ->
                 if (currentLocation != null) {
                     getCurrentWeather(
-                        lat = currentLocation.latitude,
-                        lon = currentLocation.longitude
+                        lat = currentLocation.latitude, lon = currentLocation.longitude
                     )
                 } else {
                     viewModelScope.launch {
@@ -168,7 +168,9 @@ class HomeViewModel @Inject constructor(
             }
     }
 
-    fun refreshWeather() = viewModelScope.launch {
+    fun refreshWeather(
+        getWeather: () -> Unit,
+    ) = viewModelScope.launch {
         mRetrievedWeather.emit(false)
         mLoading.emit(true)
         mLoading2.emit(true)
@@ -176,30 +178,41 @@ class HomeViewModel @Inject constructor(
         // quick response
         delay(500)
 
-        getCurrentWeather(lat = mCurrentLocation.value.first, lon = mCurrentLocation.value.second)
+        getWeather()
     }
 
-    fun getCurrentWeather(lat: Double, lon: Double) = viewModelScope.launch {
-        val tempUnitSettings = when (application.applicationContext.temperatureUnitsFlow().first()) {
-            application.applicationContext.getString(R.string.celsius) -> Units.Celsius
-            else -> Units.Metric
+    fun getSavedLocationWeather() = viewModelScope.launch {
+        application.applicationContext.activeLocationFlow().first()?.let {
+            getCurrentWeather(lat = it.latLng.latitude, lon = it.latLng.longitude)
         }
+    }
 
-        mCurrentLocation.emit(Pair(lat, lon))
-        weatherRepository.getWeather(lat = lat, lon = lon, tempUnit = tempUnitSettings)
-            .onStart {
+    fun getCurrentWeather(lat: Double, lon: Double) {
+        if (weatherJob?.isActive == true) return
+
+        weatherJob = viewModelScope.launch {
+            val tempUnitSettings =
+                when (application.applicationContext.temperatureUnitsFlow().first()) {
+                    application.applicationContext.getString(R.string.celsius) -> Units.Celsius
+                    else -> Units.Metric
+                }
+
+            mCurrentLocation.emit(Pair(lat, lon))
+            weatherRepository.getWeather(
+                lat = mCurrentLocation.value.first,
+                lon = mCurrentLocation.value.second,
+                tempUnit = tempUnitSettings
+            ).onStart {
                 Log.i("HomeViewModel", "Getting current weather")
                 mLoading.emit(true)
                 mCurrentWeather.emit(null)
-            }
-            .catch {
+            }.catch {
                 mLoading.emit(false)
                 mRefreshing.emit(false)
                 mError.emit(true)
                 mErrorMessage.emit(it.message ?: "No error message")
                 Firebase.crashlytics.recordException(it)
-            }
-            .collect {
+            }.collect {
                 it?.let { weatherResponse ->
                     mCurrentWeather.emit(weatherResponse)
                     getGenerativeAlerts()
@@ -210,6 +223,7 @@ class HomeViewModel @Inject constructor(
                 mRefreshing.emit(false)
                 mRetrievedWeather.emit(true)
             }
+        }
     }
 
     fun isCurrentHour(hour: Hour): Boolean {

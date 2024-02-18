@@ -13,6 +13,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
 import dev.joshhalvorson.materialweather.ui.screens.HomeScreen
+import dev.joshhalvorson.materialweather.ui.screens.LocationSearch
 import dev.joshhalvorson.materialweather.ui.screens.SettingsScreen
 import dev.joshhalvorson.materialweather.ui.theme.MaterialWeatherTheme
 import dev.joshhalvorson.materialweather.util.navigation.NavigationRoute
@@ -47,6 +48,17 @@ class MainActivity : ComponentActivity() {
 
                         composable(NavigationRoute.Settings.javaClass.simpleName) {
                             SettingsScreen(
+                                navigateTo = {
+                                    handleNavigation(
+                                        navController = navController,
+                                        route = it
+                                    )
+                                }
+                            )
+                        }
+
+                        composable(NavigationRoute.LocationSearch.javaClass.simpleName) {
+                            LocationSearch(
                                 navigateTo = {
                                     handleNavigation(
                                         navController = navController,
