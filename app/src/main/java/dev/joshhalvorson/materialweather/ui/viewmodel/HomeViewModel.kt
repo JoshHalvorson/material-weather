@@ -19,7 +19,9 @@ import dev.joshhalvorson.materialweather.data.models.weather.Severity
 import dev.joshhalvorson.materialweather.data.models.weather.WeatherAlert
 import dev.joshhalvorson.materialweather.data.repository.generativeweatherreport.GenerativeWeatherReportRepository
 import dev.joshhalvorson.materialweather.data.repository.weather.WeatherRepository
+import dev.joshhalvorson.materialweather.data.util.hasChangedUnitFlow
 import dev.joshhalvorson.materialweather.data.util.physicalUnitsFlow
+import dev.joshhalvorson.materialweather.data.util.storeHasChangedUnit
 import dev.joshhalvorson.materialweather.data.util.temperatureUnitsFlow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -107,17 +109,20 @@ class HomeViewModel @Inject constructor(
 
         val temperatureSetting = application.applicationContext.temperatureUnitsFlow().first()
         val unitsSetting = application.applicationContext.physicalUnitsFlow().first()
+        val hasChangedUnit = application.applicationContext.hasChangedUnitFlow().first()
 
         generativeWeatherReportRepository.getWeatherAlert(
             todaysWeather = todaysWeather,
             tomorrowsWeather = tomorrowsWeather,
             temperatureUnit = temperatureSetting
                 ?: application.applicationContext.getString(R.string.fahrenheit),
-            unit = unitsSetting ?: application.applicationContext.getString(R.string.imperial)
+            unit = unitsSetting ?: application.applicationContext.getString(R.string.imperial),
+            hasChangedUnit = hasChangedUnit ?: false
         )
             .onStart {
                 Log.i("HomeViewModel", "Getting generative alert")
 
+                application.applicationContext.storeHasChangedUnit(hasChangedUnit = false)
                 mLoading2.emit(true)
             }
             .catch {

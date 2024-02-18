@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.joshhalvorson.materialweather.R
 import dev.joshhalvorson.materialweather.data.util.physicalUnitsFlow
+import dev.joshhalvorson.materialweather.data.util.storeHasChangedUnit
 import dev.joshhalvorson.materialweather.data.util.storePhysicalUnits
 import dev.joshhalvorson.materialweather.data.util.storeTemperatureUnits
 import dev.joshhalvorson.materialweather.data.util.storeTriggerRefresh
@@ -78,16 +79,21 @@ class SettingsViewModel @Inject constructor(
         )
     }
 
+    private fun updateHomeState() = viewModelScope.launch {
+        application.applicationContext.storeTriggerRefresh(triggerRefresh = true)
+        application.applicationContext.storeHasChangedUnit(hasChangedUnit = true)
+    }
+
     fun onUnitsClicked(index: Int) = viewModelScope.launch {
         mUnitsSelectedIndex.emit(index)
         application.applicationContext.storePhysicalUnits(physicalUnits = unitOptions[index])
-        application.applicationContext.storeTriggerRefresh(triggerRefresh = true)
+        updateHomeState()
     }
 
     fun onTemperatureClicked(index: Int) = viewModelScope.launch {
         mTempSelectedIndex.emit(index)
         application.applicationContext.storeTemperatureUnits(temperatureUnits = temperatureOptions[index])
-        application.applicationContext.storeTriggerRefresh(triggerRefresh = true)
+        updateHomeState()
     }
 
     fun onThemeClicked(index: Int) = viewModelScope.launch {

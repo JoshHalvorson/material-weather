@@ -17,6 +17,7 @@ private val TEMPERATURE_UNITS = stringPreferencesKey("temp_units")
 private val PHYSICAL_UNITS = stringPreferencesKey("physical_units")
 
 private val TRIGGER_REFRESH = booleanPreferencesKey("trigger_refresh")
+private val HAS_CHANGED_UNIT = booleanPreferencesKey("has_changed_unit")
 
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
@@ -43,6 +44,11 @@ fun Context.physicalUnitsFlow(): Flow<String?> = dataStore.data.map { preference
 fun Context.triggerRefreshFlow(): Flow<Boolean?> = dataStore.data.map { preferences ->
     preferences[TRIGGER_REFRESH] ?: false
 }
+
+fun Context.hasChangedUnitFlow(): Flow<Boolean?> = dataStore.data.map { preferences ->
+    preferences[HAS_CHANGED_UNIT] ?: false
+}
+
 
 suspend fun Context.storeLastGeneratedAlert(lastGeneratedAlert: String) {
     dataStore.edit { preferences ->
@@ -77,5 +83,11 @@ suspend fun Context.storePhysicalUnits(physicalUnits: String) {
 suspend fun Context.storeTriggerRefresh(triggerRefresh: Boolean) {
     dataStore.edit { preferences ->
         preferences[TRIGGER_REFRESH] = triggerRefresh
+    }
+}
+
+suspend fun Context.storeHasChangedUnit(hasChangedUnit: Boolean) {
+    dataStore.edit { preferences ->
+        preferences[HAS_CHANGED_UNIT] = hasChangedUnit
     }
 }

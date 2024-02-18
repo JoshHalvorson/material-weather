@@ -31,12 +31,15 @@ class GenerativeWeatherReportRepository @Inject constructor(
         tomorrowsWeather: Day,
         temperatureUnit: String,
         unit: String,
+        hasChangedUnit: Boolean,
     ): Flow<String?> = flow {
         try {
             val lastGeneratedAlert = context.lastGeneratedAlertFlow().first()
             val generatedAlertText = context.generatedAlertTextFlow().first()
             val lastGeneratedAlertTime = LocalDateTime.ofInstant(
-                Instant.ofEpochMilli(lastGeneratedAlert.takeIf { it.isNotEmpty() }?.toLong() ?: Long.MAX_VALUE),
+                Instant.ofEpochMilli(
+                    lastGeneratedAlert.takeIf { it.isNotEmpty() }?.toLong() ?: Long.MAX_VALUE
+                ),
                 ZoneId.systemDefault()
             )
             val now = LocalDateTime.ofInstant(
@@ -47,12 +50,14 @@ class GenerativeWeatherReportRepository @Inject constructor(
             Log.i("GenerativeWeatherReportRepository", "last alert time: $lastGeneratedAlertTime")
             Log.i("GenerativeWeatherReportRepository", "now: $now")
 
-            if (shouldUseCachedAlert(
-                    lastGeneratedAlert = lastGeneratedAlert,
-                    lastGeneratedAlertTime = lastGeneratedAlertTime,
-                    now = now
-                )
-            ) {
+            val shouldUseCache = shouldUseCachedAlert(
+                lastGeneratedAlert = lastGeneratedAlert,
+                lastGeneratedAlertTime = lastGeneratedAlertTime,
+                now = now,
+                hasChangedUnit = hasChangedUnit
+            )
+
+            if (shouldUseCache) {
                 Log.i("GenerativeWeatherReportRepository", "Getting saved generated response")
                 emit(generatedAlertText)
             } else {
@@ -92,8 +97,13 @@ class GenerativeWeatherReportRepository @Inject constructor(
     }.flowOn(Dispatchers.IO)
 
     private fun shouldUseCachedAlert(
+        hasChangedUnit: Boolean,
         lastGeneratedAlert: String?,
         lastGeneratedAlertTime: LocalDateTime,
         now: LocalDateTime?
-    ) = !lastGeneratedAlert.isNullOrEmpty() && lastGeneratedAlertTime.plusHours(3).isAfter(now)
+    ): Boolean {
+        if (hasChangedUnit) return false
+
+        return !lastGeneratedAlert.isNullOrEmpty() && lastGeneratedAlertTime.plusHours(3).isAfter(now)
+    }
 }
