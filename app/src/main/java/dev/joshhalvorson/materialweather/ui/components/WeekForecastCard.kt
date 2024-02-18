@@ -157,6 +157,7 @@ private fun HourlyItem(
     hourlyProvider: () -> Hour,
     isCurrentHour: (Hour) -> Boolean,
 ) {
+    // TODO cant see this very well in some color schemes
     val currentHourModifier = if (isCurrentHour(hourlyProvider())) {
         Modifier.background(
             MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = .2f)

@@ -3,6 +3,7 @@ package dev.joshhalvorson.materialweather.data.util
 import dev.joshhalvorson.materialweather.data.models.weather.Day
 
 fun getGenerativeWeatherAlertPrompt(tomorrowsWeather: Day, unit: String): String {
+    // TODO specify during the day
     return """
         Can you give me an interesting piece of information in tomorrows weather ($tomorrowsWeather) 
         in $unit units, ignoring the high and low temperatures, rain, and snow, phrased as a sentence. 
