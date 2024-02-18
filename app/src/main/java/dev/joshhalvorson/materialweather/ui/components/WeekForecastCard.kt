@@ -2,6 +2,7 @@ package dev.joshhalvorson.materialweather.ui.components
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -36,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -157,10 +159,11 @@ private fun HourlyItem(
     hourlyProvider: () -> Hour,
     isCurrentHour: (Hour) -> Boolean,
 ) {
-    // TODO cant see this very well in some color schemes
     val currentHourModifier = if (isCurrentHour(hourlyProvider())) {
-        Modifier.background(
-            MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = .2f)
+        Modifier.border(
+            width = 1.dp,
+            color = MaterialTheme.colorScheme.outlineVariant,
+            shape = RectangleShape
         )
     } else {
         Modifier
