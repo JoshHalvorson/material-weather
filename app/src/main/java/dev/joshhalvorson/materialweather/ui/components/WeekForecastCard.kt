@@ -38,17 +38,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import dev.joshhalvorson.materialweather.R
 import dev.joshhalvorson.materialweather.data.models.weather.ForecastResponse
 import dev.joshhalvorson.materialweather.data.models.weather.Forecastday
 import dev.joshhalvorson.materialweather.data.models.weather.Hour
+import dev.joshhalvorson.materialweather.data.util.temperatureUnitsFlow
 
 @Composable
 fun WeekForecastCard(
@@ -159,6 +162,37 @@ private fun HourlyItem(
     hourlyProvider: () -> Hour,
     isCurrentHour: (Hour) -> Boolean,
 ) {
+    val context = LocalContext.current
+    val temperatureSetting by context.temperatureUnitsFlow()
+        .collectAsStateWithLifecycle(initialValue = "")
+
+    val maxTemp by remember {
+        derivedStateOf {
+            when (temperatureSetting) {
+                context.getString(R.string.celsius) -> forecastProvider().day.maxtempC.toInt()
+                else -> forecastProvider().day.maxtempF.toInt()
+            }
+        }
+    }
+
+    val hourlyTemp by remember {
+        derivedStateOf {
+            when (temperatureSetting) {
+                context.getString(R.string.celsius) -> hourlyProvider().tempC.toInt()
+                else -> hourlyProvider().tempF.toInt()
+            }
+        }
+    }
+
+    val hourlyTempString by remember {
+        derivedStateOf {
+            when (temperatureSetting) {
+                context.getString(R.string.celsius) -> hourlyProvider().getCurrentTempC()
+                else -> hourlyProvider().getCurrentTempF()
+            }
+        }
+    }
+
     val currentHourModifier = if (isCurrentHour(hourlyProvider())) {
         Modifier.border(
             width = 1.dp,
@@ -215,14 +249,12 @@ private fun HourlyItem(
 
         Spacer(Modifier.height(4.dp))
 
-        // TODO add metric support
         TemperatureBar(
-            dailyMaxTemperature = forecastProvider().day.maxtempF.toInt(),
-            hourTemperature = hourlyProvider().tempF.toInt(),
+            dailyMaxTemperature = maxTemp,
+            hourTemperature = hourlyTemp,
             tempText = {
-                // TODO add metric support
                 Text(
-                    text = hourlyProvider().getCurrentTempF(),
+                    text = hourlyTempString,
                     style = MaterialTheme.typography.labelSmall
                 )
             }
@@ -274,6 +306,19 @@ private fun TemperatureBar(
 
 @Composable
 private fun DayForecast(dayWeather: Forecastday) {
+    val context = LocalContext.current
+    val temperatureSetting by context.temperatureUnitsFlow()
+        .collectAsStateWithLifecycle(initialValue = "")
+
+    val minMaxTemp by remember {
+        derivedStateOf {
+            when (temperatureSetting) {
+                context.getString(R.string.celsius) -> dayWeather.day.getMinMaxTempC()
+                else -> dayWeather.day.getMinMaxTempF()
+            }
+        }
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -303,10 +348,9 @@ private fun DayForecast(dayWeather: Forecastday) {
             }
         }
 
-        // TODO add metric support
         Text(
             modifier = Modifier.defaultMinSize(minWidth = 40.dp),
-            text = dayWeather.day.getMinMaxTempF()
+            text = minMaxTemp
         )
     }
 }

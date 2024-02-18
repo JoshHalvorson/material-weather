@@ -36,7 +36,6 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel(),
     navigateTo: (NavigationRoute) -> Unit
 ) {
-    // TODO units
     // TODO location
     // TODO colors
     // TODO types of alerts

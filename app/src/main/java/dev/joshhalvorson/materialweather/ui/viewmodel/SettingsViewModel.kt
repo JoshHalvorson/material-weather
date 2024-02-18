@@ -10,6 +10,7 @@ import dev.joshhalvorson.materialweather.R
 import dev.joshhalvorson.materialweather.data.util.physicalUnitsFlow
 import dev.joshhalvorson.materialweather.data.util.storePhysicalUnits
 import dev.joshhalvorson.materialweather.data.util.storeTemperatureUnits
+import dev.joshhalvorson.materialweather.data.util.storeTriggerRefresh
 import dev.joshhalvorson.materialweather.data.util.storeUseDarkMode
 import dev.joshhalvorson.materialweather.data.util.temperatureUnitsFlow
 import dev.joshhalvorson.materialweather.data.util.useDarkModeFlow
@@ -80,11 +81,13 @@ class SettingsViewModel @Inject constructor(
     fun onUnitsClicked(index: Int) = viewModelScope.launch {
         mUnitsSelectedIndex.emit(index)
         application.applicationContext.storePhysicalUnits(physicalUnits = unitOptions[index])
+        application.applicationContext.storeTriggerRefresh(triggerRefresh = true)
     }
 
     fun onTemperatureClicked(index: Int) = viewModelScope.launch {
         mTempSelectedIndex.emit(index)
         application.applicationContext.storeTemperatureUnits(temperatureUnits = temperatureOptions[index])
+        application.applicationContext.storeTriggerRefresh(triggerRefresh = true)
     }
 
     fun onThemeClicked(index: Int) = viewModelScope.launch {

@@ -17,8 +17,10 @@
     <string name="weather_at_timestamp">weather at %1$s</string>
     <string name="percent_humidity">%1$s%% humidity</string>
     <string name="speed_mph_winds_from_direction">%1$s mph winds from %2$s</string>
+    <string name="speed_kph_winds_from_direction">%1$s kph winds from %2$s</string>
     <string name="percent_cloud_coverage">%1$s%% cloud coverage</string>
     <string name="mi_visibility">%1$s mi visibility</string>
+    <string name="km_visibility">%1$s km visibility</string>
     <string name="time_sunrise">%1$s sunrise</string>
     <string name="time_sunset">%1$s sunset</string>
     <string name="feels_like_temp">feels like %1$s</string>

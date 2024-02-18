@@ -3,6 +3,7 @@ package dev.joshhalvorson.materialweather.data.util
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -14,6 +15,8 @@ private val GENERATED_ALERT_TEXT = stringPreferencesKey("generated_alert_text")
 private val USE_DARK_MODE = stringPreferencesKey("use_dark_mode")
 private val TEMPERATURE_UNITS = stringPreferencesKey("temp_units")
 private val PHYSICAL_UNITS = stringPreferencesKey("physical_units")
+
+private val TRIGGER_REFRESH = booleanPreferencesKey("trigger_refresh")
 
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
@@ -35,6 +38,10 @@ fun Context.temperatureUnitsFlow(): Flow<String?> = dataStore.data.map { prefere
 
 fun Context.physicalUnitsFlow(): Flow<String?> = dataStore.data.map { preferences ->
     preferences[PHYSICAL_UNITS]
+}
+
+fun Context.triggerRefreshFlow(): Flow<Boolean?> = dataStore.data.map { preferences ->
+    preferences[TRIGGER_REFRESH] ?: false
 }
 
 suspend fun Context.storeLastGeneratedAlert(lastGeneratedAlert: String) {
@@ -64,5 +71,11 @@ suspend fun Context.storeTemperatureUnits(temperatureUnits: String) {
 suspend fun Context.storePhysicalUnits(physicalUnits: String) {
     dataStore.edit { preferences ->
         preferences[PHYSICAL_UNITS] = physicalUnits
+    }
+}
+
+suspend fun Context.storeTriggerRefresh(triggerRefresh: Boolean) {
+    dataStore.edit { preferences ->
+        preferences[TRIGGER_REFRESH] = triggerRefresh
     }
 }

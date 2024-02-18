@@ -26,11 +26,11 @@ class GenerativeWeatherReportRepository @Inject constructor(
     @ApplicationContext
     private val context: Context
 ) {
-    // TODO support metric
     suspend fun getWeatherAlert(
         todaysWeather: Day,
         tomorrowsWeather: Day,
-        unit: String = "imperial"
+        temperatureUnit: String,
+        unit: String,
     ): Flow<String?> = flow {
         try {
             val lastGeneratedAlert = context.lastGeneratedAlertFlow().first()
@@ -63,6 +63,7 @@ class GenerativeWeatherReportRepository @Inject constructor(
                 val response = generativeModel.generateContent(
                     getGenerativeWeatherAlertPrompt(
                         tomorrowsWeather = tomorrowsWeather,
+                        tempUnit = temperatureUnit,
                         unit = unit
                     )
                 )

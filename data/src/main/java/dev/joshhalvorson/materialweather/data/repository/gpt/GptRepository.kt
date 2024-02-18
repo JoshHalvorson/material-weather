@@ -27,11 +27,11 @@ class GptRepository @Inject constructor(
     @ApplicationContext
     private val context: Context
 ) {
-    // TODO support metric
     suspend fun getWeatherAlerts(
         todaysWeather: Day,
         tomorrowsWeather: Day,
-        unit: String = "imperial"
+        temperatureUnit: String,
+        unit: String
     ) =
         flow {
             try {
@@ -68,6 +68,7 @@ class GptRepository @Inject constructor(
                         requestBody = GptRequestBody(
                             prompt = getGenerativeWeatherAlertPrompt(
                                 tomorrowsWeather = tomorrowsWeather,
+                                tempUnit = temperatureUnit,
                                 unit = unit
                             )
                         )

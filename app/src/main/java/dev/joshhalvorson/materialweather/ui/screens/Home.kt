@@ -49,6 +49,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.android.gms.location.LocationServices
 import dev.jeziellago.compose.markdowntext.MarkdownText
 import dev.joshhalvorson.materialweather.R
+import dev.joshhalvorson.materialweather.data.util.storeTriggerRefresh
+import dev.joshhalvorson.materialweather.data.util.triggerRefreshFlow
 import dev.joshhalvorson.materialweather.ui.components.AirQualityCard
 import dev.joshhalvorson.materialweather.ui.components.AlertsCard
 import dev.joshhalvorson.materialweather.ui.components.AstroCard
@@ -67,6 +69,8 @@ import dev.joshhalvorson.materialweather.util.navigation.NavigationRoute
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(viewModel: HomeViewModel = hiltViewModel(), navigateTo: (NavigationRoute) -> Unit) {
+    val context = LocalContext.current
+
     // State
     val currentWeather by viewModel.currentWeather.collectAsStateWithLifecycle()
     val loading by viewModel.loading.collectAsStateWithLifecycle()
@@ -80,17 +84,24 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel(), navigateTo: (Navigati
     val showAirQualityInfoDialog by viewModel.showAirQualityInfoDialog.collectAsStateWithLifecycle()
     val clickedAirQuality by viewModel.clickedAirQuality.collectAsStateWithLifecycle()
     val generativeAlert by viewModel.generativeWeatherAlert.collectAsStateWithLifecycle()
+    val refresh by context.triggerRefreshFlow().collectAsStateWithLifecycle(initialValue = false)
 
     var hasPermissions by rememberSaveable { mutableStateOf<Boolean?>(null) }
     val swipeRefreshState = rememberPullRefreshState(refreshing)
     val sheetState = rememberModalBottomSheetState()
 
-    val context = LocalContext.current
     val requestLocationPermissionLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
             hasPermissions = it.containsValue(true)
         }
     val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
+
+    LaunchedEffect(refresh) {
+        if (refresh == true) {
+            viewModel.refreshWeather()
+            context.storeTriggerRefresh(triggerRefresh = false)
+        }
+    }
 
     LaunchedEffect(hasPermissions) {
         if (hasPermissions == true && !retrievedWeather) {
