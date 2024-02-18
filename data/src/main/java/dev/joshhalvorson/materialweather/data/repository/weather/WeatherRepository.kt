@@ -2,6 +2,7 @@ package dev.joshhalvorson.materialweather.data.repository.weather
 
 import android.util.Log
 import dev.joshhalvorson.materialweather.data.BuildConfig
+import dev.joshhalvorson.materialweather.data.models.Units
 import dev.joshhalvorson.materialweather.data.models.weather.ForecastResponse
 import dev.joshhalvorson.materialweather.data.models.weather.HumidityDifferenceType
 import dev.joshhalvorson.materialweather.data.models.weather.NoneDifferenceType
@@ -17,7 +18,7 @@ import javax.inject.Inject
 import kotlin.math.roundToInt
 
 class WeatherRepository @Inject constructor(private val weatherApi: WeatherApi) {
-    fun getWeather(lat: Double, lon: Double): Flow<ForecastResponse?> = flow {
+    fun getWeather(lat: Double, lon: Double, tempUnit: Units): Flow<ForecastResponse?> = flow {
         try {
             val response = weatherApi.getWeather(
                 key = BuildConfig.API_KEY,
@@ -30,7 +31,10 @@ class WeatherRepository @Inject constructor(private val weatherApi: WeatherApi) 
                 emit(
                     forecastResponse.copy(
                         alerts = forecastResponse.alerts.copy(
-                            appAlerts = constructWeatherAlerts(forecastResponse)
+                            appAlerts = constructWeatherAlerts(
+                                forecastResponse = forecastResponse,
+                                tempUnit = tempUnit
+                            )
                         )
                     )
                 )
@@ -44,10 +48,13 @@ class WeatherRepository @Inject constructor(private val weatherApi: WeatherApi) 
         }
     }.flowOn(Dispatchers.IO)
 
-    private fun constructWeatherAlerts(forecastResponse: ForecastResponse): List<WeatherAlert> {
+    private fun constructWeatherAlerts(
+        forecastResponse: ForecastResponse,
+        tempUnit: Units
+    ): List<WeatherAlert> {
         val alerts = mutableListOf<WeatherAlert>()
 
-        alerts.getTempAlerts(forecastResponse)
+        alerts.getTempAlerts(forecastResponse = forecastResponse, tempUnit = tempUnit)
         alerts.getHumidityAlerts(forecastResponse)
 
         if (alerts.isEmpty()) {
@@ -89,10 +96,18 @@ class WeatherRepository @Inject constructor(private val weatherApi: WeatherApi) 
         }
     }
 
-    private fun MutableList<WeatherAlert>.getTempAlerts(forecastResponse: ForecastResponse) {
-        // TODO add metric support
-        val todaysAverageTemp = forecastResponse.forecast.forecastday.firstOrNull()?.day?.avgtempF
-        val tomorrowsAverageTemp = forecastResponse.forecast.forecastday.getOrNull(1)?.day?.avgtempF
+    private fun MutableList<WeatherAlert>.getTempAlerts(
+        forecastResponse: ForecastResponse,
+        tempUnit: Units
+    ) {
+        val todaysAverageTemp = when (tempUnit) {
+            Units.Celsius -> forecastResponse.forecast.forecastday.firstOrNull()?.day?.avgtempC
+            else -> forecastResponse.forecast.forecastday.firstOrNull()?.day?.avgtempF
+        }
+        val tomorrowsAverageTemp = when (tempUnit) {
+            Units.Celsius -> forecastResponse.forecast.forecastday.getOrNull(1)?.day?.avgtempC
+            else -> forecastResponse.forecast.forecastday.getOrNull(1)?.day?.avgtempF
+        }
 
         if (todaysAverageTemp == null || tomorrowsAverageTemp == null) return
 

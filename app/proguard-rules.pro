@@ -20,9 +20,7 @@
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
 
--keep public class dev.joshhalvorson.materialweather.data.models.** {
-  public protected *;
-}
+-keep class dev.joshhalvorson.materialweather.data.models.**{ *; }
 
 # Retrofit does reflection on generic parameters. InnerClasses is required to use Signature and
 # EnclosingMethod is required to use InnerClasses.

@@ -2,21 +2,21 @@ package dev.joshhalvorson.materialweather.data.repository.gpt
 
 import android.content.Context
 import android.util.Log
-import androidx.datastore.preferences.core.edit
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.joshhalvorson.materialweather.data.models.gpt.Choice
 import dev.joshhalvorson.materialweather.data.models.gpt.GptRequestBody
 import dev.joshhalvorson.materialweather.data.models.gpt.GptResponse
 import dev.joshhalvorson.materialweather.data.models.weather.Day
 import dev.joshhalvorson.materialweather.data.remote.gpt.GptApi
-import dev.joshhalvorson.materialweather.data.util.Key
-import dev.joshhalvorson.materialweather.data.util.dataStore
+import dev.joshhalvorson.materialweather.data.util.generatedAlertTextFlow
 import dev.joshhalvorson.materialweather.data.util.getGenerativeWeatherAlertPrompt
+import dev.joshhalvorson.materialweather.data.util.lastGeneratedAlertFlow
+import dev.joshhalvorson.materialweather.data.util.storeGeneratedAlertText
+import dev.joshhalvorson.materialweather.data.util.storeLastGeneratedAlert
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -27,20 +27,16 @@ class GptRepository @Inject constructor(
     @ApplicationContext
     private val context: Context
 ) {
-    // TODO support metric
     suspend fun getWeatherAlerts(
         todaysWeather: Day,
         tomorrowsWeather: Day,
-        unit: String = "imperial"
+        temperatureUnit: String,
+        unit: String
     ) =
         flow {
             try {
-                val lastGptAlert = context.dataStore.data.map { preferences ->
-                    preferences[Key.LAST_GENERATED_ALERT] ?: ""
-                }
-                val gptAlertText = context.dataStore.data.map { preferences ->
-                    preferences[Key.GENERATED_ALERT_TEXT] ?: ""
-                }
+                val lastGptAlert = context.lastGeneratedAlertFlow()
+                val gptAlertText = context.generatedAlertTextFlow()
                 val lastGptAlertTime = LocalDateTime.ofInstant(
                     Instant.ofEpochMilli(lastGptAlert.firstOrNull()?.takeIf { it.isNotEmpty() }
                         ?.toLong() ?: Long.MAX_VALUE),
@@ -54,7 +50,9 @@ class GptRepository @Inject constructor(
                 Log.i("GptRepository", "last alert time: $lastGptAlertTime")
                 Log.i("GptRepository", "now: $now")
 
-                if (!lastGptAlert.firstOrNull().isNullOrEmpty() && lastGptAlertTime.plusHours(3).isAfter(now)) {
+                if (!lastGptAlert.firstOrNull().isNullOrEmpty() && lastGptAlertTime.plusHours(3)
+                        .isAfter(now)
+                ) {
                     Log.i("GptRepository", "Getting saved GPT response")
                     emit(
                         GptResponse(
@@ -70,6 +68,7 @@ class GptRepository @Inject constructor(
                         requestBody = GptRequestBody(
                             prompt = getGenerativeWeatherAlertPrompt(
                                 tomorrowsWeather = tomorrowsWeather,
+                                tempUnit = temperatureUnit,
                                 unit = unit
                             )
                         )
@@ -77,12 +76,12 @@ class GptRepository @Inject constructor(
 
                     response.body()?.let { gptResponse ->
                         Log.i("GptRepository", "$gptResponse")
-                        context.dataStore.edit { settings ->
-                            settings[Key.LAST_GENERATED_ALERT] =
-                                System.currentTimeMillis().toString()
-                            settings[Key.GENERATED_ALERT_TEXT] =
-                                gptResponse.choices.firstOrNull()?.text ?: ""
-                        }
+                        context.storeLastGeneratedAlert(
+                            lastGeneratedAlert = System.currentTimeMillis().toString()
+                        )
+                        context.storeGeneratedAlertText(
+                            generatedAlertText = gptResponse.choices.firstOrNull()?.text ?: ""
+                        )
                         emit(gptResponse)
                     } ?: run {
                         Log.e(

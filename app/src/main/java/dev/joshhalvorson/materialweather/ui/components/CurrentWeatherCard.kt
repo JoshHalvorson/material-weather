@@ -10,21 +10,24 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import dev.joshhalvorson.materialweather.R
 import dev.joshhalvorson.materialweather.data.models.weather.ForecastResponse
 import dev.joshhalvorson.materialweather.data.util.getTime
+import dev.joshhalvorson.materialweather.data.util.physicalUnitsFlow
+import dev.joshhalvorson.materialweather.data.util.temperatureUnitsFlow
 import dev.joshhalvorson.materialweather.ui.theme.weatherCard
 
 @Composable
@@ -85,20 +88,57 @@ private fun Timestamp(currentWeather: ForecastResponse) {
 
 @Composable
 private fun MiscWeatherData(currentWeather: ForecastResponse) {
+    val context = LocalContext.current
+    val unitSetting by context.physicalUnitsFlow().collectAsStateWithLifecycle(initialValue = "")
+
+    val wind by remember {
+        derivedStateOf {
+            when (unitSetting) {
+                context.getString(R.string.metric) -> currentWeather.current.getWindKph()
+                else -> currentWeather.current.getWindMph()
+            }
+        }
+    }
+
+    val visibility by remember {
+        derivedStateOf {
+            when (unitSetting) {
+                context.getString(R.string.metric) -> currentWeather.current.getVisibilityKilometers()
+                else -> currentWeather.current.getVisibilityMiles()
+            }
+        }
+    }
+
+    val windString by remember {
+        derivedStateOf {
+            when (unitSetting) {
+                context.getString(R.string.metric) -> R.string.speed_kph_winds_from_direction
+                else -> R.string.speed_mph_winds_from_direction
+            }
+        }
+    }
+
+    val visibilityString by remember {
+        derivedStateOf {
+            when (unitSetting) {
+                context.getString(R.string.metric) -> R.string.km_visibility
+                else -> R.string.mi_visibility
+            }
+        }
+    }
+
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         with(currentWeather.current) {
             Text(text = stringResource(R.string.percent_humidity, humidity))
-            // TODO add metric support
             Text(
                 text = stringResource(
-                    R.string.speed_mph_winds_from_direction,
-                    getWindMph(),
+                    windString,
+                    wind,
                     windDir
                 )
             )
             Text(text = stringResource(R.string.percent_cloud_coverage, cloud))
-            // TODO add metric support
-            Text(text = stringResource(R.string.mi_visibility, getVisibilityMiles()))
+            Text(text = stringResource(visibilityString, visibility))
 
             currentWeather.forecast.forecastday.firstOrNull()?.astroData?.let { astro ->
                 Text(text = stringResource(R.string.time_sunrise, astro.getSunriseDisplay()))
@@ -110,13 +150,43 @@ private fun MiscWeatherData(currentWeather: ForecastResponse) {
 
 @Composable
 private fun TempData(currentWeather: ForecastResponse) {
+    val context = LocalContext.current
+    val todayForecast = currentWeather.forecast.forecastday.firstOrNull()?.day
+
+    val temperatureSetting by context.temperatureUnitsFlow()
+        .collectAsStateWithLifecycle(initialValue = "")
+
+    val temp by remember {
+        derivedStateOf {
+            when (temperatureSetting) {
+                context.getString(R.string.celsius) -> currentWeather.current.getCurrentTempC()
+                else -> currentWeather.current.getCurrentTempF()
+            }
+        }
+    }
+    val minMaxTemp by remember {
+        derivedStateOf {
+            when (temperatureSetting) {
+                context.getString(R.string.celsius) -> todayForecast?.getMinMaxTempC()
+                else -> todayForecast?.getMinMaxTempF()
+            }
+        }
+    }
+    val feelLikeTemp by remember {
+        derivedStateOf {
+            when (temperatureSetting) {
+                context.getString(R.string.celsius) -> currentWeather.current.getFeelsLikeTempC()
+                else -> currentWeather.current.getFeelsLikeTempF()
+            }
+        }
+    }
+
     Column(
         modifier = Modifier.width(IntrinsicSize.Max),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // TODO add metric support
         Text(
-            text = currentWeather.current.getCurrentTempF(),
+            text = temp,
             style = MaterialTheme.typography.displayLarge
         )
 
@@ -142,17 +212,14 @@ private fun TempData(currentWeather: ForecastResponse) {
         )
 
         Row(verticalAlignment = Alignment.Top) {
-            val todayForecast = currentWeather.forecast.forecastday.firstOrNull()?.day
-            // TODO add metric support
             Text(
-                text = "${todayForecast?.getMinMaxTempF()}",
+                text = minMaxTemp ?: "",
                 style = MaterialTheme.typography.labelMedium
             )
-            // TODO add metric support
             Text(
                 text = stringResource(
                     R.string.feels_like_temp,
-                    currentWeather.current.getFeelsLikeTempF()
+                    feelLikeTemp
                 ),
                 style = MaterialTheme.typography.labelMedium
             )

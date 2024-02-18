@@ -1,6 +1,7 @@
 package dev.joshhalvorson.materialweather.ui.viewmodel
 
 import android.annotation.SuppressLint
+import android.app.Application
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -9,6 +10,8 @@ import com.google.android.gms.location.Priority
 import com.google.firebase.crashlytics.ktx.crashlytics
 import com.google.firebase.ktx.Firebase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.joshhalvorson.materialweather.R
+import dev.joshhalvorson.materialweather.data.models.Units
 import dev.joshhalvorson.materialweather.data.models.weather.AirQuality
 import dev.joshhalvorson.materialweather.data.models.weather.ForecastResponse
 import dev.joshhalvorson.materialweather.data.models.weather.Hour
@@ -16,10 +19,15 @@ import dev.joshhalvorson.materialweather.data.models.weather.Severity
 import dev.joshhalvorson.materialweather.data.models.weather.WeatherAlert
 import dev.joshhalvorson.materialweather.data.repository.generativeweatherreport.GenerativeWeatherReportRepository
 import dev.joshhalvorson.materialweather.data.repository.weather.WeatherRepository
+import dev.joshhalvorson.materialweather.data.util.hasChangedUnitFlow
+import dev.joshhalvorson.materialweather.data.util.physicalUnitsFlow
+import dev.joshhalvorson.materialweather.data.util.storeHasChangedUnit
+import dev.joshhalvorson.materialweather.data.util.temperatureUnitsFlow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -30,6 +38,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
+    private val application: Application,
     private val weatherRepository: WeatherRepository,
     private val generativeWeatherReportRepository: GenerativeWeatherReportRepository
 ) : ViewModel() {
@@ -98,10 +107,22 @@ class HomeViewModel @Inject constructor(
 
         if (todaysWeather == null || tomorrowsWeather == null) return@launch
 
-        generativeWeatherReportRepository.getWeatherAlert(todaysWeather, tomorrowsWeather)
+        val temperatureSetting = application.applicationContext.temperatureUnitsFlow().first()
+        val unitsSetting = application.applicationContext.physicalUnitsFlow().first()
+        val hasChangedUnit = application.applicationContext.hasChangedUnitFlow().first()
+
+        generativeWeatherReportRepository.getWeatherAlert(
+            todaysWeather = todaysWeather,
+            tomorrowsWeather = tomorrowsWeather,
+            temperatureUnit = temperatureSetting
+                ?: application.applicationContext.getString(R.string.fahrenheit),
+            unit = unitsSetting ?: application.applicationContext.getString(R.string.imperial),
+            hasChangedUnit = hasChangedUnit ?: false
+        )
             .onStart {
                 Log.i("HomeViewModel", "Getting generative alert")
 
+                application.applicationContext.storeHasChangedUnit(hasChangedUnit = false)
                 mLoading2.emit(true)
             }
             .catch {
@@ -159,8 +180,13 @@ class HomeViewModel @Inject constructor(
     }
 
     fun getCurrentWeather(lat: Double, lon: Double) = viewModelScope.launch {
+        val tempUnitSettings = when (application.applicationContext.temperatureUnitsFlow().first()) {
+            application.applicationContext.getString(R.string.celsius) -> Units.Celsius
+            else -> Units.Metric
+        }
+
         mCurrentLocation.emit(Pair(lat, lon))
-        weatherRepository.getWeather(lat = lat, lon = lon)
+        weatherRepository.getWeather(lat = lat, lon = lon, tempUnit = tempUnitSettings)
             .onStart {
                 Log.i("HomeViewModel", "Getting current weather")
                 mLoading.emit(true)

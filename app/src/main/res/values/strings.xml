@@ -17,8 +17,10 @@
     <string name="weather_at_timestamp">weather at %1$s</string>
     <string name="percent_humidity">%1$s%% humidity</string>
     <string name="speed_mph_winds_from_direction">%1$s mph winds from %2$s</string>
+    <string name="speed_kph_winds_from_direction">%1$s kph winds from %2$s</string>
     <string name="percent_cloud_coverage">%1$s%% cloud coverage</string>
     <string name="mi_visibility">%1$s mi visibility</string>
+    <string name="km_visibility">%1$s km visibility</string>
     <string name="time_sunrise">%1$s sunrise</string>
     <string name="time_sunset">%1$s sunset</string>
     <string name="feels_like_temp">feels like %1$s</string>
@@ -40,4 +42,17 @@
     <string name="pm10">PM10</string>
     <string name="g_m3">%1$s μg/m3</string>
     <string name="generated_weather_alert_disclaimer">This alert was created using a generative AI model</string>
+    <string name="forecast_title">Forecast</string>
+    <string name="settings_title">Settings</string>
+    <string name="app_theme">App theme</string>
+    <string name="system">System</string>
+    <string name="light">Light</string>
+    <string name="dark">Dark</string>
+    <string name="appearance">Appearance</string>
+    <string name="units">Units</string>
+    <string name="temperature">Temperature</string>
+    <string name="fahrenheit">Fahrenheit</string>
+    <string name="celsius">Celsius</string>
+    <string name="imperial">Imperial</string>
+    <string name="metric">Metric</string>
 </resources>
