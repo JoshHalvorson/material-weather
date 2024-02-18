@@ -12,4 +12,6 @@ object Key {
     val LAST_GENERATED_ALERT = stringPreferencesKey("last_generated_alert")
     val GENERATED_ALERT_TEXT = stringPreferencesKey("generated_alert_text")
     val USE_DARK_MODE = stringPreferencesKey("use_dark_mode")
+    val TEMPERATURE_UNITS = stringPreferencesKey("temp_units")
+    val PHYSICAL_UNITS = stringPreferencesKey("physical_units")
 }

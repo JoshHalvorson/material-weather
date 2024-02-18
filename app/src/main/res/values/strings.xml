@@ -46,4 +46,11 @@
     <string name="system">System</string>
     <string name="light">Light</string>
     <string name="dark">Dark</string>
+    <string name="appearance">Appearance</string>
+    <string name="units">Units</string>
+    <string name="temperature">Temperature</string>
+    <string name="fahrenheit">Fahrenheit</string>
+    <string name="celsius">Celsius</string>
+    <string name="imperial">Imperial</string>
+    <string name="metric">Metric</string>
 </resources>

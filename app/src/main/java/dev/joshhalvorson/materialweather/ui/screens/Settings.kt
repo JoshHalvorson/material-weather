@@ -12,6 +12,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -42,6 +43,8 @@ fun SettingsScreen(
     // TODO data displayed in main card
 
     val themeSelectedIndex by viewModel.themeSelectedIndex.collectAsStateWithLifecycle()
+    val tempSelectedIndex by viewModel.tempSelectedIndex.collectAsStateWithLifecycle()
+    val unitsSelectedIndex by viewModel.unitsSelectedIndex.collectAsStateWithLifecycle()
 
     /**
      * Main content
@@ -58,14 +61,80 @@ fun SettingsScreen(
                 }
             }
         )
+
         Column(
             modifier = Modifier.verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             /**
+             * Units settings
+             */
+            Column(
+                modifier = Modifier.padding(horizontal = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.units),
+                    style = MaterialTheme.typography.labelMedium
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(text = stringResource(R.string.temperature))
+                    SingleChoiceSegmentedButtonRow {
+                        viewModel.temperatureOptions.forEachIndexed { index, label ->
+                            SegmentedButton(
+                                shape = SegmentedButtonDefaults.itemShape(
+                                    index = index,
+                                    count = viewModel.temperatureOptions.size
+                                ),
+                                onClick = { viewModel.onTemperatureClicked(index = index) },
+                                selected = index == tempSelectedIndex
+                            ) {
+                                Text(label)
+                            }
+                        }
+                    }
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(text = stringResource(id = R.string.units))
+                    SingleChoiceSegmentedButtonRow {
+                        viewModel.unitOptions.forEachIndexed { index, label ->
+                            SegmentedButton(
+                                shape = SegmentedButtonDefaults.itemShape(
+                                    index = index,
+                                    count = viewModel.unitOptions.size
+                                ),
+                                onClick = { viewModel.onUnitsClicked(index = index) },
+                                selected = index == unitsSelectedIndex
+                            ) {
+                                Text(label)
+                            }
+                        }
+                    }
+                }
+            }
+
+            /**
              * Appearance settings
              */
-            Column(modifier = Modifier.padding(horizontal = 12.dp)) {
+            Column(
+                modifier = Modifier.padding(horizontal = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.appearance),
+                    style = MaterialTheme.typography.labelMedium
+                )
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -73,11 +142,11 @@ fun SettingsScreen(
                 ) {
                     Text(text = stringResource(R.string.app_theme))
                     SingleChoiceSegmentedButtonRow {
-                        viewModel.options.forEachIndexed { index, label ->
+                        viewModel.themeOptions.forEachIndexed { index, label ->
                             SegmentedButton(
                                 shape = SegmentedButtonDefaults.itemShape(
                                     index = index,
-                                    count = viewModel.options.size
+                                    count = viewModel.themeOptions.size
                                 ),
                                 onClick = { viewModel.onThemeClicked(index = index) },
                                 selected = index == themeSelectedIndex
