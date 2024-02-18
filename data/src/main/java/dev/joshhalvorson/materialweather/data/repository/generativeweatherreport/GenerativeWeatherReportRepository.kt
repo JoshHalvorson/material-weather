@@ -2,19 +2,21 @@ package dev.joshhalvorson.materialweather.data.repository.generativeweatherrepor
 
 import android.content.Context
 import android.util.Log
-import androidx.datastore.preferences.core.edit
 import com.google.ai.client.generativeai.GenerativeModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.joshhalvorson.materialweather.data.BuildConfig
 import dev.joshhalvorson.materialweather.data.models.weather.Day
-import dev.joshhalvorson.materialweather.data.util.Key
-import dev.joshhalvorson.materialweather.data.util.dataStore
+import dev.joshhalvorson.materialweather.data.util.generatedAlertTextFlow
 import dev.joshhalvorson.materialweather.data.util.getGenerativeWeatherAlertPrompt
+import dev.joshhalvorson.materialweather.data.util.lastGeneratedAlertFlow
+import dev.joshhalvorson.materialweather.data.util.storeGeneratedAlertText
+import dev.joshhalvorson.materialweather.data.util.storeLastGeneratedAlert
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.last
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -29,17 +31,12 @@ class GenerativeWeatherReportRepository @Inject constructor(
         todaysWeather: Day,
         tomorrowsWeather: Day,
         unit: String = "imperial"
-    ) = flow {
+    ): Flow<String?> = flow {
         try {
-            val lastGeneratedAlert = context.dataStore.data.map { preferences ->
-                preferences[Key.LAST_GENERATED_ALERT] ?: ""
-            }
-            val generatedAlertText = context.dataStore.data.map { preferences ->
-                preferences[Key.GENERATED_ALERT_TEXT] ?: ""
-            }
+            val lastGeneratedAlert = context.lastGeneratedAlertFlow().first()
+            val generatedAlertText = context.generatedAlertTextFlow().first()
             val lastGeneratedAlertTime = LocalDateTime.ofInstant(
-                Instant.ofEpochMilli(lastGeneratedAlert.firstOrNull()?.takeIf { it.isNotEmpty() }
-                    ?.toLong() ?: Long.MAX_VALUE),
+                Instant.ofEpochMilli(lastGeneratedAlert.takeIf { it.isNotEmpty() }?.toLong() ?: Long.MAX_VALUE),
                 ZoneId.systemDefault()
             )
             val now = LocalDateTime.ofInstant(
@@ -51,13 +48,13 @@ class GenerativeWeatherReportRepository @Inject constructor(
             Log.i("GenerativeWeatherReportRepository", "now: $now")
 
             if (shouldUseCachedAlert(
-                    lastGeneratedAlert = lastGeneratedAlert.firstOrNull(),
+                    lastGeneratedAlert = lastGeneratedAlert,
                     lastGeneratedAlertTime = lastGeneratedAlertTime,
                     now = now
                 )
             ) {
                 Log.i("GenerativeWeatherReportRepository", "Getting saved generated response")
-                emit(generatedAlertText.firstOrNull())
+                emit(generatedAlertText)
             } else {
                 val generativeModel = GenerativeModel(
                     modelName = "gemini-pro",
@@ -72,10 +69,12 @@ class GenerativeWeatherReportRepository @Inject constructor(
 
                 response.text?.let { generatedResponse ->
                     Log.i("GenerativeWeatherReportRepository", "$generatedResponse")
-                    context.dataStore.edit { settings ->
-                        settings[Key.LAST_GENERATED_ALERT] = System.currentTimeMillis().toString()
-                        settings[Key.GENERATED_ALERT_TEXT] = generatedResponse
-                    }
+
+                    context.storeLastGeneratedAlert(
+                        lastGeneratedAlert = System.currentTimeMillis().toString()
+                    )
+                    context.storeGeneratedAlertText(generatedAlertText = generatedResponse)
+
                     emit(generatedResponse)
                 } ?: run {
                     Log.e(
