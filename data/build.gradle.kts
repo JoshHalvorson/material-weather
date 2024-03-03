@@ -65,7 +65,7 @@ dependencies {
 
     api("com.google.code.gson:gson:2.10.1")
 
-    implementation("com.google.dagger:hilt-android:2.48.1")
+    implementation("com.google.dagger:hilt-android:2.49")
     kapt("com.google.dagger:hilt-compiler:2.48.1")
     androidTestImplementation("com.google.dagger:hilt-android-testing:2.46.1")
     kaptAndroidTest("com.google.dagger:hilt-compiler:2.48.1")
