@@ -78,7 +78,7 @@ dependencies {
 
     api("androidx.datastore:datastore-preferences:1.0.0")
 
-    implementation("com.google.ai.client.generativeai:generativeai:0.2.0")
+    implementation("com.google.ai.client.generativeai:generativeai:0.2.1")
 
     implementation(platform("org.jetbrains.kotlin:kotlin-bom:1.8.10"))
     api("com.google.android.libraries.places:places:3.3.0")
