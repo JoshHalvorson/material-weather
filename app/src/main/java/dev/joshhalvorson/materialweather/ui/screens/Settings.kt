@@ -26,6 +26,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -58,6 +61,8 @@ fun SettingsScreen(
     val activeLocation by viewModel.activeLocation.collectAsStateWithLifecycle()
     val navigateToLocationSearch by viewModel.navigateToLocationSearch.collectAsStateWithLifecycle()
 
+    var ranOnce by rememberSaveable { mutableStateOf(false) }
+
     LaunchedEffect(navigateToLocationSearch) {
         if (navigateToLocationSearch) {
             navigateTo(NavigationRoute.LocationSearch)
@@ -66,9 +71,11 @@ fun SettingsScreen(
     }
 
     LifecycleEventEffect(event = Lifecycle.Event.ON_RESUME) {
-        if (activeLocation == null) {
+        if (activeLocation == null && savedLocations.isEmpty() && ranOnce) {
             viewModel.onLocationClicked(index = 0, refresh = false)
         }
+
+        ranOnce = true
     }
 
     /**
@@ -119,9 +126,14 @@ fun SettingsScreen(
                     ) {
                         Column(modifier = Modifier.fillMaxWidth()) {
                             savedLocations.forEach {
-                                Text(modifier = Modifier.clickable {
-                                    viewModel.onSavedLocationClicked(it)
-                                }, text = "${it.display} - ACTIVE = ${it == activeLocation}")
+                                Text(
+                                    modifier = Modifier.clickable {
+                                        viewModel.onSavedLocationClicked(
+                                            it
+                                        )
+                                    },
+                                    text = "${it.display} - ACTIVE = ${it == activeLocation}"
+                                )
                             }
                             TextButton(modifier = Modifier.align(Alignment.End),
                                 onClick = { navigateTo(NavigationRoute.LocationSearch) }) {
@@ -130,7 +142,6 @@ fun SettingsScreen(
                         }
                     }
                 }
-
             }
 
             /**

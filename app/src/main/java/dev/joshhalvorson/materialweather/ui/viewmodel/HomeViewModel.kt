@@ -23,6 +23,7 @@ import dev.joshhalvorson.materialweather.data.util.activeLocationFlow
 import dev.joshhalvorson.materialweather.data.util.hasChangedUnitFlow
 import dev.joshhalvorson.materialweather.data.util.physicalUnitsFlow
 import dev.joshhalvorson.materialweather.data.util.storeHasChangedUnit
+import dev.joshhalvorson.materialweather.data.util.storeLocationOption
 import dev.joshhalvorson.materialweather.data.util.temperatureUnitsFlow
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -84,6 +85,10 @@ class HomeViewModel @Inject constructor(
 
     private val mGenerativeWeatherAlert = MutableStateFlow<WeatherAlert?>(null)
     val generativeWeatherAlert = mGenerativeWeatherAlert.asStateFlow()
+
+    fun setLocationOption(option: String) = viewModelScope.launch {
+        application.applicationContext.storeLocationOption(option)
+    }
 
     fun onAirQualityClicked(airQuality: AirQuality?) = viewModelScope.launch {
         mClickedAirQuality.emit(airQuality)

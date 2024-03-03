@@ -87,7 +87,7 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel(), navigateTo: (Navigati
     val generativeAlert by viewModel.generativeWeatherAlert.collectAsStateWithLifecycle()
     val refresh by context.triggerRefreshFlow().collectAsStateWithLifecycle(initialValue = false)
     val locationOption by context.locationOptionFlow()
-        .collectAsStateWithLifecycle(initialValue = "")
+        .collectAsStateWithLifecycle(initialValue = context.getString(R.string.device))
 
     var hasPermissions by rememberSaveable { mutableStateOf<Boolean?>(null) }
     val swipeRefreshState = rememberPullRefreshState(refreshing)
@@ -142,12 +142,18 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel(), navigateTo: (Navigati
                 context, Manifest.permission.ACCESS_FINE_LOCATION
             ) -> {
                 hasPermissions = true
+                if (locationOption == null) {
+                    viewModel.setLocationOption(context.getString(R.string.device))
+                }
             }
 
             ContextCompat.checkSelfPermission(
                 context, Manifest.permission.ACCESS_COARSE_LOCATION
             ) -> {
                 hasPermissions = true
+                if (locationOption == null) {
+                    viewModel.setLocationOption(context.getString(R.string.device))
+                }
             }
 
             else -> hasPermissions = false

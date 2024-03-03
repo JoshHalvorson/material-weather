@@ -23,6 +23,7 @@ import dev.joshhalvorson.materialweather.data.util.temperatureUnitsFlow
 import dev.joshhalvorson.materialweather.data.util.useDarkModeFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -159,21 +160,21 @@ class SettingsViewModel @Inject constructor(
     }
 
     private fun getSavedLocations() = viewModelScope.launch {
-        mSavedLocations.emit(
-            application.applicationContext.savedLocationsFlow().first() ?: emptyList()
-        )
-        if (mSavedLocations.value.isNotEmpty() && mLocationSelectedIndex.value == locationOptions.indexOf(
-                application.applicationContext.getString(R.string.set)
-            )
-        ) {
-            mSavedLocationsVisible.emit(true)
+        application.applicationContext.savedLocationsFlow().collectLatest {
+            mSavedLocations.emit(it ?: emptyList())
+            if (mSavedLocations.value.isNotEmpty() && mLocationSelectedIndex.value == locationOptions.indexOf(
+                    application.applicationContext.getString(R.string.set)
+                )
+            ) {
+                mSavedLocationsVisible.emit(true)
+            }
         }
     }
 
     private fun getActiveLocation() = viewModelScope.launch {
-        mActiveLocation.emit(
-            application.applicationContext.activeLocationFlow().first()
-        )
+        application.applicationContext.activeLocationFlow().collectLatest {
+            mActiveLocation.emit(it)
+        }
     }
 
     private fun getLocationSetting() = viewModelScope.launch {
