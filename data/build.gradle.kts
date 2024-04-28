@@ -53,7 +53,7 @@ kapt {
 }
 
 dependencies {
-    implementation("androidx.core:core-ktx:1.12.0")
+    implementation("androidx.core:core-ktx:1.13.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     // define a BOM and its version
@@ -76,10 +76,10 @@ dependencies {
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 
-    api("androidx.datastore:datastore-preferences:1.0.0")
+    api("androidx.datastore:datastore-preferences:1.1.0")
 
-    implementation("com.google.ai.client.generativeai:generativeai:0.2.1")
+    implementation("com.google.ai.client.generativeai:generativeai:0.4.0")
 
     implementation(platform("org.jetbrains.kotlin:kotlin-bom:1.8.10"))
-    api("com.google.android.libraries.places:places:3.3.0")
+    api("com.google.android.libraries.places:places:3.4.0")
 }
