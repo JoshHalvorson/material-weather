@@ -20,7 +20,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
@@ -133,7 +133,7 @@ private fun DayItem(
                 Spacer(modifier = Modifier.height(16.dp))
             }
             if (!isLast) {
-                Divider()
+                HorizontalDivider()
             }
         }
     }
@@ -146,7 +146,7 @@ private fun HourlyForecast(
     isCurrentHour: (Hour) -> Boolean
 ) {
     LazyRow(modifier = Modifier.fillMaxWidth(), state = state) {
-        itemsIndexed(items = wrapper.hour, key = { index, item -> item.timeEpoch }) { index, item ->
+        itemsIndexed(items = wrapper.hour, key = { _, item -> item.timeEpoch }) { _, item ->
             HourlyItem(
                 forecastProvider = { wrapper },
                 hourlyProvider = { item },

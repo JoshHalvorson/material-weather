@@ -2,7 +2,6 @@ package dev.joshhalvorson.materialweather.ui.components
 
 import androidx.compose.runtime.Composable
 import com.google.accompanist.swiperefresh.SwipeRefreshState
-import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 
 /**
  * Since the new pullRefresh modifier requires the use of the compose material library and this
@@ -11,5 +10,5 @@ import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
  */
 @Composable
 fun rememberPullRefreshState(isRefreshing: Boolean): SwipeRefreshState {
-    return rememberSwipeRefreshState(isRefreshing)
+    return rememberPullRefreshState(isRefreshing, onRefresh =)
 }
