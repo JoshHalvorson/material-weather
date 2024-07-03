@@ -62,7 +62,7 @@ enum class MoonPhase {
 
     companion object {
         fun getPhase(phaseString: String) =
-            values().firstOrNull { phaseString.equals(it.name.replace("_", " "), true) }
+            entries.firstOrNull { phaseString.equals(it.name.replace("_", " "), true) }
                 ?: FULL_MOON
     }
 }

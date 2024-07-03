@@ -79,6 +79,6 @@ dependencies {
 
     implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
 
-    implementation(platform("org.jetbrains.kotlin:kotlin-bom:1.8.10"))
+    implementation(platform("org.jetbrains.kotlin:kotlin-bom:1.9.20"))
     api("com.google.android.libraries.places:places:3.5.0")
 }
