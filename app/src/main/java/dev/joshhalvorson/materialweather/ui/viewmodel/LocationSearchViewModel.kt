@@ -56,10 +56,11 @@ class LocationSearchViewModel @Inject constructor(
         locationSearchRepository.getLocationLatitudeAndLongitude(placeId = location)
             .onStart { mLocationSearchResultsLoading.emit(true) }
             .catch { mLocationSearchResultsLoading.emit(false) }.collect { place ->
-                place?.takeIf { it.name != null && it.latLng != null }?.let {
+                place?.takeIf { it.name != null && it.latLng != null && it.address != null }?.let {
                     with(application.applicationContext) {
                         val savedLocation = SavedLocation(
-                            display = it.name!!,
+                            name = it.name!!,
+                            display = it.address!!,
                             latLng = it.latLng!!
                         )
                         storeLocations(location = savedLocation)

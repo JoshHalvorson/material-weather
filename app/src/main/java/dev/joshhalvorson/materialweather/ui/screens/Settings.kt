@@ -1,6 +1,5 @@
 package dev.joshhalvorson.materialweather.ui.screens
 
-import android.content.res.Configuration
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -37,17 +36,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.google.android.gms.maps.model.LatLng
 import dev.joshhalvorson.materialweather.R
 import dev.joshhalvorson.materialweather.data.models.location.SavedLocation
 import dev.joshhalvorson.materialweather.ui.components.MaterialWeatherTopAppBar
-import dev.joshhalvorson.materialweather.ui.theme.MaterialWeatherTheme
 import dev.joshhalvorson.materialweather.ui.viewmodel.SettingsViewModel
 import dev.joshhalvorson.materialweather.util.navigation.NavigationRoute
 
@@ -277,7 +273,7 @@ private fun SavedLocationItem(
             modifier = Modifier
                 .padding(4.dp)
                 .clickable { onSavedLocationClicked(savedLocation) },
-            text = savedLocation.display,
+            text = savedLocation.display.removeSuffix(", USA"),
             color = MaterialTheme.colorScheme.onBackground
         )
     }

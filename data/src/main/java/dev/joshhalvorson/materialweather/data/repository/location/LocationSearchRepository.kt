@@ -49,7 +49,10 @@ class LocationSearchRepository @Inject constructor(
     suspend fun getLocationLatitudeAndLongitude(placeId: String): Flow<Place?> = callbackFlow {
         try {
             val request =
-                FetchPlaceRequest.builder(placeId, listOf(Place.Field.LAT_LNG, Place.Field.NAME))
+                FetchPlaceRequest.builder(
+                    placeId,
+                    listOf(Place.Field.LAT_LNG, Place.Field.NAME, Place.Field.ADDRESS)
+                )
                     .setSessionToken(token).build()
 
             placesClient.fetchPlace(request).addOnSuccessListener { response ->
