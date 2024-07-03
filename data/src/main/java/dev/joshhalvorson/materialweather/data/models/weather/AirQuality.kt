@@ -70,6 +70,6 @@ enum class Quality {
     Hazardous;
 
     companion object {
-        fun getQuality(quality: Int) = values()[quality - 1]
+        fun getQuality(quality: Int) = entries[quality - 1]
     }
 }

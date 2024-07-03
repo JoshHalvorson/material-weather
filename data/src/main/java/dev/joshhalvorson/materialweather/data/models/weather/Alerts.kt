@@ -102,7 +102,7 @@ enum class Severity {
 
     companion object {
         fun getSeverity(severity: String) =
-            values().firstOrNull { it.name.equals(severity, true) } ?: Unknown
+            entries.firstOrNull { it.name.equals(severity, true) } ?: Unknown
     }
 }
 

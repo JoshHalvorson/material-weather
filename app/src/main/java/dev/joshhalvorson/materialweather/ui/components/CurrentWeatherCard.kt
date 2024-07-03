@@ -49,7 +49,7 @@ fun CurrentWeatherCard(
 }
 
 @Composable
-private fun CardContent(currentWeather: ForecastResponse, onSettingsClicked: () -> Unit = {}) {
+private fun CardContent(currentWeather: ForecastResponse) {
     Column {
         Row(
             modifier = Modifier

@@ -1,0 +1,9 @@
+package dev.joshhalvorson.materialweather.data.models.location
+
+import com.google.android.gms.maps.model.LatLng
+
+data class SavedLocation(
+    val name: String,
+    val display: String,
+    val latLng: LatLng
+)

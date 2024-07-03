@@ -103,3 +103,8 @@
 -keep,allowobfuscation,allowshrinking class * extends com.google.gson.reflect.TypeToken
 
 ##---------------End: proguard configuration for Gson  ----------
+-dontwarn io.grpc.internal.DnsNameResolverProvider
+-dontwarn io.grpc.internal.PickFirstLoadBalancerProvider
+-keep class com.google.android.gms.tasks.** {*;}
+-keep class com.google.android.libraries.places.** {*;}
+-keep class com.google.android.libraries.places.internal.** {*;}
