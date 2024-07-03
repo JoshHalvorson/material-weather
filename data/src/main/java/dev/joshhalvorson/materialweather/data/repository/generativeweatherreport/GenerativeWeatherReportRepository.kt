@@ -103,6 +103,7 @@ class GenerativeWeatherReportRepository @Inject constructor(
     ): Boolean {
         if (hasChangedUnit) return false
 
-        return !lastGeneratedAlert.isNullOrEmpty() && lastGeneratedAlertTime.plusHours(3).isAfter(now)
+        return !lastGeneratedAlert.isNullOrEmpty() && lastGeneratedAlertTime.plusHours(3)
+            .isAfter(now)
     }
 }
